@@ -27,6 +27,18 @@ unsigned __stdcall HandleClientThreadFunc(void* pArguments)
             printf("Receive Error : %d\r\n", nError);
             isConnected = false;
         }
+
+        try
+        {
+            sData = "Acknowledge (" + pSock->GetIP() + ")";
+            pSock->Send(sData);
+        }
+        catch (int nError)
+        {
+            printf("Send Error : %d\r\n", nError);
+            isConnected = false;
+        }
+        
     }
 
     delete pSock;
@@ -55,7 +67,7 @@ int main()
         catch (int nError)
         {
             printf("Accept Error : %d\r\n", nError);
-            server.Initialize();
+          //  server.Initialize();
         }
     }
 

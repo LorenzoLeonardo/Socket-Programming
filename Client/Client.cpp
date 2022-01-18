@@ -11,6 +11,7 @@
 #include <iphlpapi.h>
 #include <stdio.h>
 #include <string>
+#include <iostream>
 
 using namespace std;
 #pragma comment(lib, "Ws2_32.lib")
@@ -46,7 +47,7 @@ int main()
 
 
     // Resolve the server address and port
-    iResult = getaddrinfo("192.168.0.104", DEFAULT_PORT, &hints, &result);
+    iResult = getaddrinfo("192.168.0.101", DEFAULT_PORT, &hints, &result);
     if (iResult != 0) {
         printf("getaddrinfo failed: %d\n", iResult);
         WSACleanup();
@@ -90,13 +91,17 @@ int main()
 
     int recvbuflen = DEFAULT_BUFLEN;
 
-    const char* sendbuf = "this is a test";
+    string sendbuf = "this is a test";
     char recvbuf[DEFAULT_BUFLEN];
 
     memset(recvbuf, 0, sizeof(recvbuf));
     // Send an initial buffer
 
-        iResult = send(ConnectSocket, sendbuf, (int)strlen(sendbuf) + 1, 0);
+    while (1)
+    {
+        cin >> sendbuf;
+
+        iResult = send(ConnectSocket, sendbuf.c_str(), sendbuf.length() + 1, 0);
         if (iResult == SOCKET_ERROR) {
             printf("send failed: %d\n", WSAGetLastError());
             closesocket(ConnectSocket);
@@ -107,20 +112,20 @@ int main()
         printf("Bytes Sent: %ld\n", iResult);
 
 
-    // shutdown the connection for sending since no more data will be sent
-    // the client can still use the ConnectSocket for receiving data
+        // shutdown the connection for sending since no more data will be sent
+        // the client can still use the ConnectSocket for receiving data
 
 
-    // Receive data until the server closes the connection
-  /*  do {
-        iResult = recv(ConnectSocket, recvbuf, recvbuflen, 0);
-        if (iResult > 0)
-            printf("Bytes received: %d\n", iResult);
-        else if (iResult == 0)
-            printf("Connection closed\n");
-        else
-            printf("recv failed: %d\n", WSAGetLastError());
-    } while (iResult > 0);
-    */
+        // Receive data until the server closes the connection
+        //do {
+            iResult = recv(ConnectSocket, recvbuf, recvbuflen, 0);
+            if (iResult > 0)
+                printf("From Server : %s\n", recvbuf);
+            else if (iResult == 0)
+                printf("Connection closed\n");
+            else
+                printf("recv failed: %d\n", WSAGetLastError());
+       // } while (iResult > 0);
+    }
 }
 

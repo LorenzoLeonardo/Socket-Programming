@@ -13,9 +13,9 @@ string CSocket::Receive()
     iResult = recv(m_socket, recvbuf, sizeof(recvbuf), 0);
     if (iResult == SOCKET_ERROR) {
         nError = WSAGetLastError();
-        printf("send failed: %d\n", WSAGetLastError());
-        closesocket(m_socket);
-        WSACleanup();
+       // printf("recv failed: %d\n", WSAGetLastError());
+       // closesocket(m_socket);
+       // WSACleanup();
         throw nError;
     }
 
@@ -30,9 +30,9 @@ void CSocket::Send(string sendbuf)
     iResult = send(m_socket, sendbuf.c_str(), (int)sendbuf.length() + 1, 0);
     if (iResult == SOCKET_ERROR) {
         nError = WSAGetLastError();
-        printf("send failed: %d\n", WSAGetLastError());
-        closesocket(m_socket);
-        WSACleanup();
+       // printf("send failed: %d\n", WSAGetLastError());
+      //  closesocket(m_socket);
+       // WSACleanup();
         throw nError;
     }
 }

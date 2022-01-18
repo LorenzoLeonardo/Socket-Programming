@@ -43,7 +43,7 @@ bool CSocketServer::Initialize()
     m_ListenSocket = socket(result->ai_family, result->ai_socktype, result->ai_protocol);
     if (m_ListenSocket == INVALID_SOCKET) {
         nError = WSAGetLastError();
-        printf("Error at socket(): %ld\n", WSAGetLastError());
+       // printf("Error at socket(): %ld\n", WSAGetLastError());
         freeaddrinfo(result);
         WSACleanup();
         throw nError;
@@ -79,7 +79,7 @@ CSocket* CSocketServer::Accept()
     SOCKET ClientSocket = accept(m_ListenSocket, (struct sockaddr*)&client_addr,&nSize);
     if (ClientSocket == INVALID_SOCKET) {
         nError = WSAGetLastError();
-        closesocket(m_ListenSocket);
+      //  closesocket(m_ListenSocket);
         throw nError;
     }
     else
