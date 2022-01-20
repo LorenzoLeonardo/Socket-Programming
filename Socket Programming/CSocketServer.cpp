@@ -87,6 +87,10 @@ CSocket* CSocketServer::Accept()
         pSocket = new CSocket(ClientSocket);
         pSocket->SetClientAddr(client_addr);
         string ip = pSocket->GetIP();
+        string hostname = pSocket->GetHostName();
+
+        cout << ip << "(" << hostname<< ")" << " is connected";
+        cout << endl;
     }
     return pSocket;
 }

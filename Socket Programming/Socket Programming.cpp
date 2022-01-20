@@ -20,11 +20,12 @@ unsigned __stdcall HandleClientThreadFunc(void* pArguments)
         try
         {
             sData = pSock->Receive();
-            printf("FROM (%s) : %s\r\n", pSock->GetIP().c_str(), sData.c_str());
+            cout <<"FROM "<< pSock->GetIP() << "(" << pSock->GetHostName() << ") " << sData;
+            cout << endl;
         }
         catch (int nError)
         {
-            printf("Receive Error : %d\r\n", nError);
+            cout << "Exception : " << nError <<endl;
             isConnected = false;
         }
 
@@ -35,27 +36,47 @@ unsigned __stdcall HandleClientThreadFunc(void* pArguments)
         }
         catch (int nError)
         {
-            printf("Send Error : %d\r\n", nError);
+            cout << "Exception : " << nError << endl;
             isConnected = false;
         }
         
     }
+    cout << pSock->GetIP() << "(" << pSock->GetHostName() << ")" << " is disconnected";
+    cout << endl;
 
     delete pSock;
+    pSock = NULL;
+    _endthreadex(0);
+    return 0;
+}
+
+unsigned __stdcall HandleServerExit(void* pArguments)
+{
+    CSocketServer* server = (CSocketServer*)pArguments;
+    bool bFlag = true;
+    while (bFlag)
+    {
+        if (GetAsyncKeyState(VK_ESCAPE))
+        {
+            bFlag = false;
+        }
+        Sleep(1);
+    }
+    server->Cleanup();
     _endthreadex(0);
     return 0;
 }
 
 int main()
 {
-  
-
-    CSocketServer  server("1234");
+    CSocketServer  server("0611");
+   // hThread = (HANDLE)_beginthreadex(NULL, 0, &HandleServerExit, &server, 0, &threadID);
 
     printf("Starting Server...\r\n");
     server.Initialize();
-
-    while (1)
+    bool bServerAlive = true;
+    printf("The Server is now starting to accept connections...\r\n");
+    while (bServerAlive)
     {
         try
         {
@@ -67,15 +88,11 @@ int main()
         catch (int nError)
         {
             printf("Accept Error : %d\r\n", nError);
-          //  server.Initialize();
+            bServerAlive = false;
         }
     }
 
-  
-
     server.Cleanup();
-
-
     return 0;
 }
 

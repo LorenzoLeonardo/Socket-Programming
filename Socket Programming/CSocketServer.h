@@ -6,6 +6,7 @@ class CSocketServer
 {
 private:
 	vector<CSocket> v_clientSocket;
+	
 	SOCKET m_ListenSocket;
 	string m_serverPort;
 public:

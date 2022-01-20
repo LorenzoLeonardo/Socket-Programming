@@ -12,18 +12,47 @@
 #include <stdio.h>
 #include <string>
 #include <iostream>
+#include <process.h>
 
 using namespace std;
 #pragma comment(lib, "Ws2_32.lib")
 
 #define PORT 8080
-#define DEFAULT_PORT "1234"
+#define DEFAULT_PORT "0611"
 #define DEFAULT_BUFLEN 512
+bool g_bFlag;
+
+unsigned __stdcall HandleClientExit(void* pArguments)
+{
+    SOCKET* ConnectSocket = (SOCKET*)pArguments;
+   
+    while (g_bFlag)
+    {
+        if (GetAsyncKeyState(VK_ESCAPE))
+        {
+            g_bFlag = false;
+        }
+        Sleep(1);
+    }
+    
+    closesocket(*ConnectSocket);
+    WSACleanup();
+    g_bFlag = false;
+    _endthreadex(0);
+    return 0;
+}
+HANDLE hThread = NULL;
+unsigned int threadID;
 
 int main()
 {
+    string ipAdd;
+    g_bFlag = true;
     printf("Starting Client!\r\n");
-    WSADATA wsaData;
+    printf("Input IP Address :");
+    cin >> ipAdd;
+
+   WSADATA wsaData;
     int iResult;
     SOCKET ConnectSocket = INVALID_SOCKET;
 
@@ -47,7 +76,7 @@ int main()
 
 
     // Resolve the server address and port
-    iResult = getaddrinfo("192.168.0.101", DEFAULT_PORT, &hints, &result);
+    iResult = getaddrinfo(ipAdd.c_str(), DEFAULT_PORT, &hints, &result);
     if (iResult != 0) {
         printf("getaddrinfo failed: %d\n", iResult);
         WSACleanup();
@@ -91,17 +120,21 @@ int main()
 
     int recvbuflen = DEFAULT_BUFLEN;
 
+    hThread = (HANDLE)_beginthreadex(NULL, 0, &HandleClientExit, &ConnectSocket, 0, &threadID);
+
+
     string sendbuf = "this is a test";
     char recvbuf[DEFAULT_BUFLEN];
 
     memset(recvbuf, 0, sizeof(recvbuf));
     // Send an initial buffer
-
-    while (1)
+    
+    while (g_bFlag)
     {
-        cin >> sendbuf;
+        cout << "Type your message: ";
+        getline(cin, sendbuf);
 
-        iResult = send(ConnectSocket, sendbuf.c_str(), sendbuf.length() + 1, 0);
+        iResult = send(ConnectSocket, sendbuf.c_str(), (int)(sendbuf.length() + 1), 0);
         if (iResult == SOCKET_ERROR) {
             printf("send failed: %d\n", WSAGetLastError());
             closesocket(ConnectSocket);
