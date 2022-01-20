@@ -54,6 +54,7 @@ unsigned _stdcall HandleClientThreadFunc(void* pArguments)
     }
 
     g_pfnListener->Remove(pListener);
+    _endthreadex(0);
     return 0;
 }
 void CTCPListener::Remove(CSocket* socket)
