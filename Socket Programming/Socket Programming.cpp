@@ -32,7 +32,32 @@ void CloseServer(HANDLE hHandle)
 unsigned _stdcall HandleClientThreadFunc(void* pArguments)
 {
     CSocket* pSocket = (CSocket*)pArguments;
-
+    string sData = "";
+    
+    for (int i = 0; i < g_vSocket.size(); i++)
+    {
+        if (g_vSocket[i] != pSocket)
+        {
+            g_vSocket[i]->Send("\r\n"+ pSocket->GetIP() + " has joined the chat.");
+        }
+    }
+    while (!(sData = pSocket->Receive()).empty())
+    {
+        for (int i = 0; i < g_vSocket.size(); i++)
+        {
+            if (g_vSocket[i] != pSocket)
+            {
+                g_vSocket[i]->Send("\r\n" + pSocket->GetIP()+" : "+ sData);
+            }
+        }
+    }
+    for (int i = 0; i < g_vSocket.size(); i++)
+    {
+        if (g_vSocket[i] != pSocket)
+        {
+            g_vSocket[i]->Send("\r\n" + pSocket->GetIP() + " has left the chat.");
+        }
+    }
     g_vSocket.erase(std::remove(g_vSocket.begin(), g_vSocket.end(), pSocket), g_vSocket.end());
     
     delete pSocket;
@@ -42,6 +67,8 @@ unsigned _stdcall HandleClientThreadFunc(void* pArguments)
 
 void NewClientConnection(void* pData)
 {
+    ((CSocket*)pData)->Send("Welcome to Lorenzo Leonardo's Awesome Chat\r\n");
+
     g_vSocket.push_back((CSocket*)pData);
     _beginthreadex(NULL, 0, &HandleClientThreadFunc, (CSocket*)pData, 0, 0);
 }
