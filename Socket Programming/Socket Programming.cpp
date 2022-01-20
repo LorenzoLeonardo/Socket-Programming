@@ -1,33 +1,14 @@
-#include "CSocketServer.h"
-#include "CTCPListener.h"
+#include "..\EnzTCP\CSocket.h"
+#include "..\EnzTCP\EnzTCP.h"
+#include <process.h>
 #include <vector>
 
-using namespace std;
-
-
-vector < CSocket*> g_vSocket;
-
-
-
-HANDLE OpenServer(string sport, NewConnection fncPtr)
-{
-   return (HANDLE) new CTCPListener(sport, fncPtr);
-}
-
-void RunServer(HANDLE hHandle)
-{
-    CTCPListener* listener = (CTCPListener*)hHandle;
-
-    listener->Run();
-}
-
-void CloseServer(HANDLE hHandle)
-{
-    CTCPListener* listener = (CTCPListener*)hHandle;
-
-    listener->Stop();
-    delete listener;
-}
+vector<CSocket*> g_vSocket;
+#ifdef _DEBUG
+#pragma comment(lib, "..\\x64\\Debug\\EnzTCP.lib")
+#else
+#pragma comment(lib, "..\\x64\\Release\\EnzTCP.lib")
+#endif
 
 unsigned _stdcall HandleClientThreadFunc(void* pArguments)
 {

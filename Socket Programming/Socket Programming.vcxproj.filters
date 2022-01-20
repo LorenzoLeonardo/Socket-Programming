@@ -18,30 +18,12 @@
     <ClCompile Include="Socket Programming.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="CSocketClient.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="CSocketServer.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="CSocket.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="CTCPListener.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="CSocketClient.h">
+    <ClInclude Include="..\EnzTCP\CSocket.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="CSocketServer.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="CSocket.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="CTCPListener.h">
+    <ClInclude Include="..\EnzTCP\CTCPListener.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

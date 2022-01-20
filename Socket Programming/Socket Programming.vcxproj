@@ -141,17 +141,11 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="CSocket.cpp" />
-    <ClCompile Include="CSocketClient.cpp" />
-    <ClCompile Include="CSocketServer.cpp" />
-    <ClCompile Include="CTCPListener.cpp" />
     <ClCompile Include="Socket Programming.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="CSocket.h" />
-    <ClInclude Include="CSocketClient.h" />
-    <ClInclude Include="CSocketServer.h" />
-    <ClInclude Include="CTCPListener.h" />
+    <ClInclude Include="..\EnzTCP\CSocket.h" />
+    <ClInclude Include="..\EnzTCP\CTCPListener.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

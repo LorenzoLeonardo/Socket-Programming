@@ -4,6 +4,7 @@
 #endif
 
 #include "pch.h"
+#include "EnzTCP.h"
 #include <windows.h>
 #include <winsock2.h>
 #include <ws2tcpip.h>
@@ -18,9 +19,9 @@ using namespace std;
 
 #define MAX_BUFFER_SIZE 1024
 
-class CSocket
+class ENZTCPLIBRARY_API CSocket
 {
-protected:
+private:
 	SOCKET m_socket;
 	struct sockaddr m_addr;
 	string m_hostname;
@@ -68,18 +69,18 @@ public:
 		m_ipAddress = "";
 	}
 
-	SOCKET GetSocket()
+	SOCKET  GetSocket()
 	{
 		return m_socket;
 	}
 
-	void SetClientAddr(struct sockaddr addr)
+	void  SetClientAddr(struct sockaddr addr)
 	{
 		m_addr = addr;
 		SetIP();
 		SetHostname();
 	}
-	string GetIP()
+	 string GetIP()
 	{
 		return m_ipAddress;
 	}
@@ -88,7 +89,7 @@ public:
 		return m_hostname;
 	}
 
-    string Receive();
+	string Receive();
 	void Send(string sendbuf);
 };
 
