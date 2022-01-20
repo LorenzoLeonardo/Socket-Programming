@@ -4,7 +4,7 @@
 #endif
 
 #include "pch.h"
-#include "EnzTCP.h"
+
 #include <windows.h>
 #include <winsock2.h>
 #include <ws2tcpip.h>
@@ -12,14 +12,32 @@
 #include <stdio.h>
 #include <string>
 #include <iostream>
-
 #include <vector>
+#include "EnzTCP.h"
+
 using namespace std;
 #pragma comment(lib, "Ws2_32.lib")
 
 #define MAX_BUFFER_SIZE 1024
 
-class ENZTCPLIBRARY_API CSocket
+class ENZTCPLIBRARY_API ISocket
+{
+private:
+	virtual void SetHostname() = 0;
+	virtual void SetIP() = 0;
+	virtual void EraseAllSubStr(std::string& mainStr, const std::string& toErase) = 0;
+	virtual void EraseSubStringsPre(std::string& mainStr, const std::vector<std::string>& strList) = 0;
+public:
+	virtual SOCKET GetSocket() = 0;
+	virtual void   SetClientAddr(struct sockaddr addr) = 0;
+	virtual string GetIP() = 0;
+	virtual string GetHostName() = 0;
+	virtual string Receive() = 0;
+	virtual void   Send(string sendbuf) = 0;
+};
+
+
+class ENZTCPLIBRARY_API CSocket : ISocket
 {
 private:
 	SOCKET m_socket;

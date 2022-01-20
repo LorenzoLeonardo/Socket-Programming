@@ -3,7 +3,7 @@
 #include <process.h>
 #include <vector>
 
-vector<CSocket*> g_vSocket;
+vector<ISocket*> g_vSocket;
 #ifdef _DEBUG
 #pragma comment(lib, "..\\x64\\Debug\\EnzTCP.lib")
 #else
@@ -12,7 +12,7 @@ vector<CSocket*> g_vSocket;
 
 unsigned _stdcall HandleClientThreadFunc(void* pArguments)
 {
-    CSocket* pSocket = (CSocket*)pArguments;
+    ISocket* pSocket = (ISocket*)pArguments;
     string sData = "";
     
     for (int i = 0; i < g_vSocket.size(); i++)
@@ -48,10 +48,10 @@ unsigned _stdcall HandleClientThreadFunc(void* pArguments)
 
 void NewClientConnection(void* pData)
 {
-    ((CSocket*)pData)->Send("Welcome to Lorenzo Leonardo's Awesome Chat\r\n");
+    ((ISocket*)pData)->Send("Welcome to Lorenzo Leonardo's Awesome Chat\r\n");
 
-    g_vSocket.push_back((CSocket*)pData);
-    _beginthreadex(NULL, 0, &HandleClientThreadFunc, (CSocket*)pData, 0, 0);
+    g_vSocket.push_back((ISocket*)pData);
+    _beginthreadex(NULL, 0, &HandleClientThreadFunc, (ISocket*)pData, 0, 0);
 }
 
 int main()
