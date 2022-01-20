@@ -1,6 +1,25 @@
 #include "CSocket.h"
 
+void CSocket::EraseAllSubStr(std::string& mainStr, const std::string& toErase)
+{
+    size_t pos = std::string::npos;
+    // Search for the substring in string in a loop untill nothing is found
+    while ((pos = mainStr.find(toErase)) != std::string::npos)
+    {
+        // If found then erase it from string
+        mainStr.erase(pos, toErase.length());
+    }
+}
 
+void CSocket::EraseSubStringsPre(std::string& mainStr, const std::vector<std::string>& strList)
+{
+    // Iterate over the given list of substrings. For each substring call eraseAllSubStr() to
+    // remove its all occurrences from main string.
+    for (std::vector<std::string>::const_iterator it = strList.begin(); it != strList.end(); it++)
+    {
+        EraseAllSubStr(mainStr, *it);
+    }
+}
 string CSocket::Receive()
 {
     int iResult = 0;
@@ -13,13 +32,12 @@ string CSocket::Receive()
     iResult = recv(m_socket, recvbuf, sizeof(recvbuf), 0);
     if (iResult == SOCKET_ERROR) {
         nError = WSAGetLastError();
-       // printf("recv failed: %d\n", WSAGetLastError());
-       // closesocket(m_socket);
-       // WSACleanup();
         throw nError;
     }
 
     string data(recvbuf);
+
+  //  EraseSubStringsPre(data, { "/r/n" });
     return data;
 }
 void CSocket::Send(string sendbuf)
@@ -30,9 +48,6 @@ void CSocket::Send(string sendbuf)
     iResult = send(m_socket, sendbuf.c_str(), (int)sendbuf.length() + 1, 0);
     if (iResult == SOCKET_ERROR) {
         nError = WSAGetLastError();
-       // printf("send failed: %d\n", WSAGetLastError());
-      //  closesocket(m_socket);
-       // WSACleanup();
         throw nError;
     }
 }

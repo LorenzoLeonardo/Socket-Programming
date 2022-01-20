@@ -55,6 +55,9 @@ private:
 		m_ipAddress = str;
 
 	}
+	void EraseAllSubStr(std::string& mainStr, const std::string& toErase);
+	void EraseSubStringsPre(std::string& mainStr, const std::vector<std::string>& strList);
+
 public:
 	CSocket(SOCKET s)
 	{

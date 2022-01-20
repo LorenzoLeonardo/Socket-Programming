@@ -25,7 +25,7 @@ bool CSocketServer::Initialize(string port)
         nError = WSAGetLastError();
         throw nError;
     }
-
+    cout << "WSAStartup() = SUCCESS.\r\n";
     struct addrinfo* result = NULL, * ptr = NULL, hints;
 
     ZeroMemory(&hints, sizeof(hints));
@@ -41,7 +41,7 @@ bool CSocketServer::Initialize(string port)
         WSACleanup();
         throw nError;
     }
-
+    cout << "getaddrinfo() = SUCCESS.\r\n";
     m_ListenSocket = socket(result->ai_family, result->ai_socktype, result->ai_protocol);
     if (m_ListenSocket == INVALID_SOCKET) {
         nError = WSAGetLastError();
@@ -50,7 +50,7 @@ bool CSocketServer::Initialize(string port)
         WSACleanup();
         throw nError;
     }
-
+    cout << "socket() = SUCCESS.\r\n";
     // Setup the TCP listening socket
     iResult = bind(m_ListenSocket, result->ai_addr, (int)result->ai_addrlen);
     if (iResult == SOCKET_ERROR) {
@@ -60,7 +60,7 @@ bool CSocketServer::Initialize(string port)
         WSACleanup();
         throw nError;
        }
-
+    cout << "bind() = SUCCESS.\r\n";
     if (listen(m_ListenSocket, SOMAXCONN) == SOCKET_ERROR) {
         nError = WSAGetLastError();
         closesocket(m_ListenSocket);
@@ -90,9 +90,6 @@ CSocket* CSocketServer::Accept()
         pSocket->SetClientAddr(client_addr);
         string ip = pSocket->GetIP();
         string hostname = pSocket->GetHostName();
-
-        cout << ip << "(" << hostname<< ")" << " is connected";
-        cout << endl;
     }
     return pSocket;
 }
