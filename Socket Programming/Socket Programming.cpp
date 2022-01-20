@@ -7,9 +7,35 @@ using namespace std;
 
 vector < CSocket*> g_vSocket;
 
+
+
+HANDLE OpenServer(string sport, NewConnection fncPtr)
+{
+   return (HANDLE) new CTCPListener(sport, fncPtr);
+}
+
+void RunServer(HANDLE hHandle)
+{
+    CTCPListener* listener = (CTCPListener*)hHandle;
+
+    listener->Run();
+}
+
+void CloseServer(HANDLE hHandle)
+{
+    CTCPListener* listener = (CTCPListener*)hHandle;
+
+    listener->Stop();
+    delete listener;
+}
+
 unsigned _stdcall HandleClientThreadFunc(void* pArguments)
 {
- 
+    CSocket* pSocket = (CSocket*)pArguments;
+
+    g_vSocket.erase(std::remove(g_vSocket.begin(), g_vSocket.end(), pSocket), g_vSocket.end());
+    
+    delete pSocket;
     _endthreadex(0);
     return 0;
 }
@@ -17,15 +43,15 @@ unsigned _stdcall HandleClientThreadFunc(void* pArguments)
 void NewClientConnection(void* pData)
 {
     g_vSocket.push_back((CSocket*)pData);
-    _beginthreadex(NULL, 0, &HandleClientThreadFunc, socket, 0, 0);
+    _beginthreadex(NULL, 0, &HandleClientThreadFunc, (CSocket*)pData, 0, 0);
 }
 
 int main()
 {
-    CTCPListener listener("0611", NewClientConnection);
+    HANDLE hHandle = OpenServer("0611", NewClientConnection);
 
-    listener.Run();
-
+    RunServer(hHandle);
+    CloseServer(hHandle);
     return 0;
 }
 
