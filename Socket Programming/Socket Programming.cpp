@@ -1,10 +1,10 @@
 #include "CSocketServer.h"
-
+#include "CTCPListener.h"
 #include <vector>
 
 using namespace std;
 
-vector<CSocket*> vSocket;
+/*vector<CSocket*> vSocket;
 
 HANDLE hThread;
 unsigned int threadID;
@@ -65,11 +65,20 @@ unsigned __stdcall HandleServerExit(void* pArguments)
     server->Cleanup();
     _endthreadex(0);
     return 0;
+}*/
+
+void Listen_MessageReceived(CSocket* socket, string message)
+{
+    cout << message << endl;
+    return;
 }
 
 int main()
 {
-    CSocketServer  server("0611");
+    CTCPListener listener("192.168.0.101","0611", Listen_MessageReceived);
+
+    listener.Run();
+/*    CSocketServer  server("0611");
    // hThread = (HANDLE)_beginthreadex(NULL, 0, &HandleServerExit, &server, 0, &threadID);
 
     printf("Starting Server...\r\n");
@@ -92,7 +101,7 @@ int main()
         }
     }
 
-    server.Cleanup();
+    server.Cleanup();*/
     return 0;
 }
 

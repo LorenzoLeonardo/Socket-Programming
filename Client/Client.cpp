@@ -13,6 +13,7 @@
 #include <string>
 #include <iostream>
 #include <process.h>
+#include <mutex>
 
 using namespace std;
 #pragma comment(lib, "Ws2_32.lib")
@@ -21,6 +22,17 @@ using namespace std;
 #define DEFAULT_PORT "0611"
 #define DEFAULT_BUFLEN 512
 bool g_bFlag;
+
+HANDLE m_console;
+COORD m_cursorPosition;
+mutex m_mutex;
+
+inline void GotoXY(int x, int y)
+{
+    m_cursorPosition.X = x; // Locates column
+    m_cursorPosition.Y = y; // Locates Row
+    SetConsoleCursorPosition(m_console, m_cursorPosition); // Sets position for next thing to be printed 
+}
 
 unsigned __stdcall HandleClientExit(void* pArguments)
 {
@@ -38,15 +50,76 @@ unsigned __stdcall HandleClientExit(void* pArguments)
     closesocket(*ConnectSocket);
     WSACleanup();
     g_bFlag = false;
-    _endthreadex(0);
+   // _endthreadex(0);
     return 0;
 }
-HANDLE hThread = NULL;
-unsigned int threadID;
+HANDLE hThread_reply = NULL;
+HANDLE hThread_send = NULL;
+HANDLE hThread_exit = NULL;
+unsigned int threadID_reply;
+unsigned int threadID_send;
+unsigned int threadID_exit;
 
+unsigned __stdcall HandleServerReply(void* pArguments)
+{
+    SOCKET* ConnectSocket = (SOCKET*)pArguments;
+
+    char recvbuf[DEFAULT_BUFLEN];
+    int recvbuflen = DEFAULT_BUFLEN;
+
+    memset(recvbuf, 0, sizeof(recvbuf));
+    int iResult = 0;
+
+    do {
+       
+    iResult = recv(*ConnectSocket, recvbuf, recvbuflen, 0);
+    m_mutex.lock();
+   // GotoXY(100, 5);
+    if (iResult > 0)
+        printf("From Server : %s\n", recvbuf);
+    else if (iResult == 0)
+        printf("Connection closed\n");
+    else
+    {
+        printf("recv failed: %d\n", WSAGetLastError());
+        iResult = -1;
+    }
+    m_mutex.unlock();
+    } while (iResult > 0);
+    //_endthreadex(0);
+    return 0;
+}
+unsigned __stdcall HandleSendMessage(void* pArguments)
+{
+    SOCKET* ConnectSocket = (SOCKET*)pArguments;
+    int iResult = 0;
+
+    string sendbuf = "begin";
+
+    while (g_bFlag)
+    {
+        m_mutex.lock();
+       // GotoXY(1, 15);
+        cout <<"Type your message: ";
+       
+        getline(cin, sendbuf);
+        m_mutex.unlock();
+        //cout << endl;
+       
+        iResult = send(*ConnectSocket, sendbuf.c_str(), (int)(sendbuf.length()+1), 0);
+        if (iResult == SOCKET_ERROR) {
+            printf("send failed: %d\n", WSAGetLastError());
+            closesocket(*ConnectSocket);
+            WSACleanup();
+            g_bFlag = false;
+        }
+    }
+    return 0;
+}
 int main()
 {
     string ipAdd;
+    m_console = GetStdHandle(STD_OUTPUT_HANDLE);
     g_bFlag = true;
     printf("Starting Client!\r\n");
     printf("Input IP Address :");
@@ -118,47 +191,16 @@ int main()
         return 1;
     }
 
-    int recvbuflen = DEFAULT_BUFLEN;
-
-    hThread = (HANDLE)_beginthreadex(NULL, 0, &HandleClientExit, &ConnectSocket, 0, &threadID);
-
-
-    string sendbuf = "this is a test";
-    char recvbuf[DEFAULT_BUFLEN];
-
-    memset(recvbuf, 0, sizeof(recvbuf));
-    // Send an initial buffer
+    hThread_exit = (HANDLE)_beginthreadex(NULL, 0, &HandleClientExit, &ConnectSocket, 0, &threadID_exit);
+    hThread_reply = (HANDLE)_beginthreadex(NULL, 0, &HandleServerReply, &ConnectSocket, 0, &threadID_reply);
+    hThread_send = (HANDLE)_beginthreadex(NULL, 0, &HandleSendMessage, &ConnectSocket, 0, &threadID_send);
+  
     
-    while (g_bFlag)
-    {
-        cout << "Type your message: ";
-        getline(cin, sendbuf);
 
-        iResult = send(ConnectSocket, sendbuf.c_str(), (int)(sendbuf.length() + 1), 0);
-        if (iResult == SOCKET_ERROR) {
-            printf("send failed: %d\n", WSAGetLastError());
-            closesocket(ConnectSocket);
-            WSACleanup();
-            return 1;
-        }
-
-        printf("Bytes Sent: %ld\n", iResult);
-
-
-        // shutdown the connection for sending since no more data will be sent
-        // the client can still use the ConnectSocket for receiving data
-
-
-        // Receive data until the server closes the connection
-        //do {
-            iResult = recv(ConnectSocket, recvbuf, recvbuflen, 0);
-            if (iResult > 0)
-                printf("From Server : %s\n", recvbuf);
-            else if (iResult == 0)
-                printf("Connection closed\n");
-            else
-                printf("recv failed: %d\n", WSAGetLastError());
-       // } while (iResult > 0);
-    }
+    // Send an initial buffer
+    WaitForSingleObjectEx(hThread_send, INFINITE, true);
+    WaitForSingleObjectEx(hThread_reply, INFINITE, true);
+    WaitForSingleObjectEx(hThread_exit, INFINITE, true);
+    return 0;
 }
 

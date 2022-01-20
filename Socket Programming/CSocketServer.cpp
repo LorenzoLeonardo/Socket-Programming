@@ -11,11 +11,13 @@ CSocketServer::~CSocketServer()
 
 }
 
-bool CSocketServer::Initialize()
+bool CSocketServer::Initialize(string port)
 {
     WSADATA wsaData;
     int iResult;
     int nError = 0;
+
+    m_serverPort = port;
 
     // Initialize Winsock
     iResult = WSAStartup(MAKEWORD(2, 2), &wsaData);

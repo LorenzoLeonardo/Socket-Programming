@@ -10,10 +10,14 @@ private:
 	SOCKET m_ListenSocket;
 	string m_serverPort;
 public:
+	CSocketServer()
+	{
+		m_ListenSocket = INVALID_SOCKET;
+	}
 	CSocketServer(string serverPort);
 	~CSocketServer();
 
-	bool Initialize();
+	bool Initialize(string port);
 	bool Cleanup();
 	CSocket* Accept();
 };
