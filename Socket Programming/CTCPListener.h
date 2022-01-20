@@ -18,13 +18,15 @@ private:
 	
 	CSocketServer*  m_socketServer;
 	bool m_bIsRunning;
-	
+	NewConnection m_pfnMessageReceived;
+
 public:
 	
 	CTCPListener(string ipAddress, string port, NewConnection handler);
+	CTCPListener(string port, NewConnection handler);
 	~CTCPListener();
 
-	NewConnection m_pfnMessageReceived;
+	
 	void Run();
 	void Stop();
 };

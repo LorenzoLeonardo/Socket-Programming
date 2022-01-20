@@ -7,9 +7,6 @@ using namespace std;
 
 vector < CSocket*> g_vSocket;
 
-
-unsigned _stdcall HandleClientThreadFunc(void*);
-
 unsigned _stdcall HandleClientThreadFunc(void* pArguments)
 {
  
@@ -25,7 +22,7 @@ void NewClientConnection(void* pData)
 
 int main()
 {
-    CTCPListener listener("192.168.0.101","0611", NewClientConnection);
+    CTCPListener listener("0611", NewClientConnection);
 
     listener.Run();
 

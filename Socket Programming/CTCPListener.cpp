@@ -8,6 +8,13 @@ CTCPListener::CTCPListener(string ipAddress, string port, NewConnection handler)
     m_socketServer = new CSocketServer(m_port);
 }
 
+CTCPListener::CTCPListener(string port, NewConnection handler) :
+    m_port(port), m_pfnMessageReceived(handler)
+{
+    m_bIsRunning = true;
+    m_socketServer = new CSocketServer(m_port);
+}
+
 CTCPListener::~CTCPListener()
 {
     delete m_socketServer;
