@@ -143,10 +143,6 @@
   <ItemGroup>
     <ClCompile Include="Socket Programming.cpp" />
   </ItemGroup>
-  <ItemGroup>
-    <ClInclude Include="..\EnzTCP\CSocket.h" />
-    <ClInclude Include="..\EnzTCP\CTCPListener.h" />
-  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>
