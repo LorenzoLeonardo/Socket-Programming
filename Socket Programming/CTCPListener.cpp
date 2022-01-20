@@ -27,11 +27,16 @@ unsigned _stdcall HandleClientThreadFunc(void* pArguments)
         {
             sData = pListener->Receive();
             if (sData.empty())
-                break;
-            for (int i = 0; i < g_pfnListener->GetListClients().size(); i++)
             {
-                if (g_pfnListener->GetListClients()[i] != pListener)
-                    g_pfnListener->GetListClients()[i]->Send(sData);
+                isConnected = false;
+            }
+            else
+            {
+                for (int i = 0; i < g_pfnListener->GetListClients().size(); i++)
+                {
+                    if (g_pfnListener->GetListClients()[i] != pListener)
+                        g_pfnListener->GetListClients()[i]->Send(sData);
+                }
             }
         }
         catch (int nError)
@@ -47,6 +52,7 @@ unsigned _stdcall HandleClientThreadFunc(void* pArguments)
         if (g_pfnListener->GetListClients()[i] != pListener)
             g_pfnListener->GetListClients()[i]->Send(sData);
     }
+
     g_pfnListener->Remove(pListener);
     return 0;
 }
