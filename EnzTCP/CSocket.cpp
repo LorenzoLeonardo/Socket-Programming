@@ -1,26 +1,70 @@
 #include "pch.h"
 #include "CSocket.h"
 
-void CSocket::EraseAllSubStr(std::string& mainStr, const std::string& toErase)
+using namespace std;
+
+CSocket::CSocket(SOCKET s)
 {
-    size_t pos = std::string::npos;
-    // Search for the substring in string in a loop untill nothing is found
-    while ((pos = mainStr.find(toErase)) != std::string::npos)
-    {
-        // If found then erase it from string
-        mainStr.erase(pos, toErase.length());
-    }
+    m_socket = s;
+    memset(&m_addr, 0, sizeof(m_addr));
+    m_hostname = "";
+    m_ipAddress = "";
+}
+CSocket::~CSocket()
+{
+
+}
+SOCKET  CSocket::GetSocket()
+{
+    return m_socket;
 }
 
-void CSocket::EraseSubStringsPre(std::string& mainStr, const std::vector<std::string>& strList)
+void  CSocket::SetClientAddr(struct sockaddr addr)
 {
-    // Iterate over the given list of substrings. For each substring call eraseAllSubStr() to
-    // remove its all occurrences from main string.
-    for (std::vector<std::string>::const_iterator it = strList.begin(); it != strList.end(); it++)
+    m_addr = addr;
+    SetIP();
+    SetHostname();
+}
+string CSocket::GetIP()
+{
+    return m_ipAddress;
+}
+string CSocket::GetHostName()
+{
+    return m_hostname;
+}
+void CSocket::SetHostname()
+{
+    struct addrinfo* result = NULL, * ptr = NULL, hints;
+    int iResult = 0;
+    ZeroMemory(&hints, sizeof(hints));
+    hints.ai_family = AF_INET;
+    hints.ai_socktype = SOCK_STREAM;
+    hints.ai_protocol = IPPROTO_TCP;
+    hints.ai_flags = AI_PASSIVE;
+
+    iResult = getaddrinfo(m_ipAddress.c_str(), NULL, &hints, &result);
     {
-        EraseAllSubStr(mainStr, *it);
+        char host[512];
+        memset(host, 0, sizeof(host));
+        int status = getnameinfo(result->ai_addr, (socklen_t)result->ai_addrlen, host, 512, 0, 0, 0);
+        m_hostname = host;
+        freeaddrinfo(result);
     }
 }
+void CSocket::SetIP()
+{
+    struct sockaddr_in* pV4Addr = (struct sockaddr_in*)&m_addr;
+    struct in_addr ipAddr = pV4Addr->sin_addr;
+
+    char str[INET_ADDRSTRLEN];
+    inet_ntop(AF_INET, &ipAddr, str, INET_ADDRSTRLEN);
+
+    m_ipAddress = str;
+
+}
+
+
 string CSocket::Receive()
 {
     int iResult = 0;
@@ -35,10 +79,7 @@ string CSocket::Receive()
         nError = WSAGetLastError();
         throw nError;
     }
-
     string data(recvbuf);
-
-  //  EraseSubStringsPre(data, { "/r/n" });
     return data;
 }
 void CSocket::Send(string sendbuf)

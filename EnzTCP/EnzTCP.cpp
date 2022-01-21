@@ -15,7 +15,12 @@ void RunServer(HANDLE hHandle)
 
     listener->Run();
 }
+void CloseClientConnection(HANDLE hHandle)
+{
+    CSocket* clientSocket = (CSocket*)hHandle;
 
+    delete clientSocket;
+}
 void CloseServer(HANDLE hHandle)
 {
     CTCPListener* listener = (CTCPListener*)hHandle;

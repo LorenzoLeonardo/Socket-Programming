@@ -1,9 +1,10 @@
 #include "..\EnzTCP\CSocket.h"
-#include "..\EnzTCP\EnzTCP.h"
 #include <process.h>
 #include <vector>
+using namespace std;
 
 vector<ISocket*> g_vSocket;
+
 #ifdef _DEBUG
 #pragma comment(lib, "..\\x64\\Debug\\EnzTCP.lib")
 #else
