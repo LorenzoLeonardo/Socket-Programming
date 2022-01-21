@@ -30,14 +30,15 @@ public:
 	void DisplayConnectedClients()
 	{
 		int nItem = 0;
-	
+		string client;
 	//	m_ctrlListConnected.InsertItem(LVIF_TEXT | LVIF_STATE, nItem,
 		//	csNumber, LVIS_SELECTED | LVIS_FOCUSED, LVIS_SELECTED | LVIS_FOCUSED, 0, 0);
 		m_ctrlListConnected.DeleteAllItems();
 		for (int nRow = 0; nRow < m_vSocket->size(); nRow++)
 		{
+			client = (* m_vSocket)[nRow]->GetIP() + "(" + to_string((*m_vSocket)[nRow]->GetSocket()) + ")";
 			m_ctrlListConnected.InsertItem(LVIF_TEXT | LVIF_STATE, nRow,
-				(* m_vSocket)[nRow]->GetIP().c_str(), LVIS_SELECTED | LVIS_FOCUSED, LVIS_SELECTED | LVIS_FOCUSED, 0, 0);
+				client.c_str(), LVIS_SELECTED | LVIS_FOCUSED, LVIS_SELECTED | LVIS_FOCUSED, 0, 0);
 			//m_ctrlListConnected.SetItemText(nItem, nRow + 1, m_vSocket[col]);
 		}
 

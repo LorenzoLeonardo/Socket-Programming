@@ -90,23 +90,22 @@ UINT HandleClientThreadFunc(LPVOID pParam)
 		return 0;
 	try
 	{
+		string text = pSocket->GetIP() + "(" + to_string(pSocket->GetSocket()) + ")" + " has joined the conversation.\r\n";
+		g_dlgPtr->UpdateChatAreaText(text);
+
 		for (int i = 0; i < list->size(); i++)
 		{
-			//if (list[i] != pSocket)
-			//{
-				string text = pSocket->GetIP() + " has joined the conversation.\r\n";
-				g_dlgPtr->UpdateChatAreaText(text);
-				(*list)[i]->Send(text);
-			//}
+			(*list)[i]->Send(text);
 		}
 		while (!(sData = pSocket->Receive()).empty())
 		{
+			string text = pSocket->GetIP() + "(" + to_string(pSocket->GetSocket()) + ")" + " : " + sData + "\r\n";
+			g_dlgPtr->UpdateChatAreaText(text);
+
 			for (int i = 0; i < list->size(); i++)
 			{
 				if ((*list)[i] != pSocket)
 				{
-					string text = pSocket->GetIP() + " : " + sData + "\r\n";
-					g_dlgPtr->UpdateChatAreaText(text);
 					(*list)[i]->Send(text);
 				}
 			}
@@ -115,7 +114,7 @@ UINT HandleClientThreadFunc(LPVOID pParam)
 		{
 			if ((*list)[i] != pSocket)
 			{
-				(*list)[i]->Send(pSocket->GetIP() + " has left the conversation.\r\n");
+				(*list)[i]->Send(pSocket->GetIP() + "(" + to_string(pSocket->GetSocket()) + ")" + " has left the conversation.\r\n");
 			}
 		}
 	
@@ -125,13 +124,12 @@ UINT HandleClientThreadFunc(LPVOID pParam)
 		MessageBox(NULL, TEXT("ERROR"), TEXT("ERROR"), 0);
 	}
 	
-	string text = pSocket->GetIP() + " has left the conversation.\r\n";
+	string text = pSocket->GetIP() + "(" + to_string(pSocket->GetSocket())+ ")" +" has left the conversation.\r\n";
 	g_dlgPtr->UpdateChatAreaText(text);
-
 	list->erase(std::remove(list->begin(), list->end(), pSocket), list->end());
 	g_dlgPtr->DisplayConnectedClients();
+
 	CloseClientConnection(pSocket);
-	//_endthreadex(0);
 	return 0;   // thread completed successfully
 }
 
@@ -144,8 +142,6 @@ void NewClientConnection(void* pData)
 			((ISocket*)pData)->Send("Welcome to Lorenzo Leonardo's Awesome Chat\r\n");
 			g_dlgPtr->GetVectorList()->push_back((ISocket*)pData);
 			g_dlgPtr->DisplayConnectedClients();
-			//string text = ((ISocket*)pData)->GetIP() + " has joined the conversation.\r\n";
-			//g_dlgPtr->UpdateChatAreaText(text);
 			AfxBeginThread(HandleClientThreadFunc, (ISocket*)pData);
 		}
 		catch (int nError)

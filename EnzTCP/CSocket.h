@@ -18,9 +18,6 @@ using namespace std;
 
 class ENZTCPLIBRARY_API ISocket
 {
-private:
-	void SetHostname();
-	void SetIP();
 public:
 	virtual SOCKET GetSocket() = 0;
 	virtual void   SetClientAddr(struct sockaddr addr) = 0;
