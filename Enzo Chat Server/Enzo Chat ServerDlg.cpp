@@ -91,7 +91,8 @@ UINT HandleClientThreadFunc(LPVOID pParam)
 	try
 	{
 		string text = pSocket->GetIP() + "(" + to_string(pSocket->GetSocket()) + ")" + " has joined the conversation.\r\n";
-		g_dlgPtr->UpdateChatAreaText(text);
+		CString csText(text.c_str());
+		g_dlgPtr->UpdateChatAreaText(csText);
 
 		for (int i = 0; i < list->size(); i++)
 		{
@@ -100,7 +101,8 @@ UINT HandleClientThreadFunc(LPVOID pParam)
 		while (!(sData = pSocket->Receive()).empty())
 		{
 			string text = pSocket->GetIP() + "(" + to_string(pSocket->GetSocket()) + ")" + " : " + sData + "\r\n";
-			g_dlgPtr->UpdateChatAreaText(text);
+			CString csText(text.c_str());
+			g_dlgPtr->UpdateChatAreaText(csText);
 
 			for (int i = 0; i < list->size(); i++)
 			{
@@ -125,7 +127,9 @@ UINT HandleClientThreadFunc(LPVOID pParam)
 	}
 	
 	string text = pSocket->GetIP() + "(" + to_string(pSocket->GetSocket())+ ")" +" has left the conversation.\r\n";
-	g_dlgPtr->UpdateChatAreaText(text);
+	CString csText(text.c_str());
+
+	g_dlgPtr->UpdateChatAreaText(csText);
 	list->erase(std::remove(list->begin(), list->end(), pSocket), list->end());
 	g_dlgPtr->DisplayConnectedClients();
 
@@ -187,7 +191,19 @@ BOOL CEnzoChatServerDlg::OnInitDialog()
 			pSysMenu->AppendMenu(MF_STRING, IDM_ABOUTBOX, strAboutMenu);
 		}
 	}
+	// InitCommonControlsEx() is required on Windows XP if an application
+// manifest specifies use of ComCtl32.dll version 6 or later to enable
+// visual styles.  Otherwise, any window creation will fail.
+#ifndef _UNICODE
+	INITCOMMONCONTROLSEX InitCtrls;
+	InitCtrls.dwSize = sizeof(InitCtrls);
+	// Set this to include all the common control classes you want to use
+	// in your application.
+	InitCtrls.dwICC = ICC_WIN95_CLASSES;
+	InitCommonControlsEx(&InitCtrls);
 
+	CMFCVisualManager::SetDefaultManager(RUNTIME_CLASS(CMFCVisualManagerWindows));
+#endif	
 	// Set the icon for this dialog.  The framework does this automatically
 	//  when the application's main window is not a dialog
 	SetIcon(m_hIcon, TRUE);			// Set big icon
@@ -198,7 +214,7 @@ BOOL CEnzoChatServerDlg::OnInitDialog()
 
 	m_ctrlListConnected.InsertColumn(nCol, lpcRecHeader[nCol++], LVCFMT_FIXED_WIDTH, 150);
 	//m_ctrlListConnected.InsertColumn(nCol, lpcRecHeader[nCol++], LVCFMT_LEFT, 250);
-	m_ctrlListConnected.SetExtendedStyle(LVS_EX_FULLROWSELECT | LVS_EX_TRACKSELECT | LVS_EDITLABELS);
+	//m_ctrlListConnected.SetExtendedStyle(LVS_EX_FULLROWSELECT | LVS_EX_TRACKSELECT | LVS_EDITLABELS);
 
 	AfxBeginThread(ServerThreadFunc, this);
 	// TODO: Add extra initialization here
@@ -255,24 +271,38 @@ HCURSOR CEnzoChatServerDlg::OnQueryDragIcon()
 }
 
 
-
+char* CEnzoChatServerDlg::convert_from_wstring(const WCHAR* wstr)
+{
+	int wstr_len = (int)wcslen(wstr);
+	int num_chars = WideCharToMultiByte(CP_UTF8, 0, wstr, wstr_len, NULL, 0, NULL, NULL);
+	CHAR* strTo = (CHAR*)malloc((num_chars + 1) * sizeof(CHAR));
+	if (strTo)
+	{
+		WideCharToMultiByte(CP_UTF8, 0, wstr, wstr_len, strTo, num_chars, NULL, NULL);
+		strTo[num_chars] = '\0';
+	}
+	return strTo;
+}
 void CEnzoChatServerDlg::OnBnClickedOk()
 {
 	// TODO: Add your control notification handler code here
 	//CDialog::OnOK();
-	char input[MAX_BUFFER_SIZE];
+	CString input;
 
-	m_ctrlInputArea.GetWindowText(input, sizeof(input));
-	string text(input);
+	m_ctrlInputArea.GetWindowText(input);
 
-	text = "Server : "+ text + "\r\n";
 
-	UpdateChatAreaText(text);
+	input = _T("Server : ")+ input + _T("\r\n");
+
+	UpdateChatAreaText(input);
+	
 	for (int i = 0; i < m_vSocket->size(); i++)
 	{
-		(* m_vSocket)[i]->Send(text);
+		char* sInput = convert_from_wstring(input);
+		(* m_vSocket)[i]->Send(sInput);
+		free(sInput);
 	}
-	m_ctrlInputArea.SetWindowText("");
+	m_ctrlInputArea.SetWindowText(_T(""));
 }
 
 

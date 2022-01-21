@@ -30,15 +30,21 @@ public:
 	void DisplayConnectedClients()
 	{
 		int nItem = 0;
-		string client;
+		CString client;
 	//	m_ctrlListConnected.InsertItem(LVIF_TEXT | LVIF_STATE, nItem,
 		//	csNumber, LVIS_SELECTED | LVIS_FOCUSED, LVIS_SELECTED | LVIS_FOCUSED, 0, 0);
 		m_ctrlListConnected.DeleteAllItems();
+
+		
 		for (int nRow = 0; nRow < m_vSocket->size(); nRow++)
 		{
-			client = (* m_vSocket)[nRow]->GetIP() + "(" + to_string((*m_vSocket)[nRow]->GetSocket()) + ")";
+			CString ipAddress((*m_vSocket)[nRow]->GetIP().c_str());
+			CString socketID(to_string((*m_vSocket)[nRow]->GetSocket()).c_str());
+			CString hostName((*m_vSocket)[nRow]->GetHostName().c_str());
+			client = ipAddress + _T("(") + socketID + _T(")") + _T("(") + hostName + _T(")");
+
 			m_ctrlListConnected.InsertItem(LVIF_TEXT | LVIF_STATE, nRow,
-				client.c_str(), LVIS_SELECTED | LVIS_FOCUSED, LVIS_SELECTED | LVIS_FOCUSED, 0, 0);
+				client, LVIS_SELECTED | LVIS_FOCUSED, LVIS_SELECTED | LVIS_FOCUSED, 0, 0);
 			//m_ctrlListConnected.SetItemText(nItem, nRow + 1, m_vSocket[col]);
 		}
 
@@ -57,14 +63,15 @@ public:
 	{
 		return m_vSocket;
 	}
-	void UpdateChatAreaText(string stringData)
+	void UpdateChatAreaText(CString stringData)
 	{
-		char stringText[MAX_BUFFER_SIZE];
-		m_ctrlChatArea.GetWindowText(stringText, sizeof(stringText));
-		string newData(stringText);
+		CString stringText;
+		m_ctrlChatArea.GetWindowText(stringText);
 
-		newData += stringData;
-		m_ctrlChatArea.SetWindowText(newData.c_str());
+		stringText += stringData;
+		m_ctrlChatArea.SetWindowText(stringText);
+		m_ctrlChatArea.SetFocus();
+		m_ctrlChatArea.SetSel(-1);
 	}
 
 
@@ -84,6 +91,7 @@ protected:
 	HANDLE m_ServerHandle;
 	vector<ISocket*> *m_vSocket;
 
+	char* convert_from_wstring(const WCHAR* wstr);
 	// Generated message map functions
 	virtual BOOL OnInitDialog();
 	afx_msg void OnSysCommand(UINT nID, LPARAM lParam);
