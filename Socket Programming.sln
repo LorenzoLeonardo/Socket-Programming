@@ -3,9 +3,11 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.0.32014.148
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Socket Programming", "Socket Programming\Socket Programming.vcxproj", "{3044DFB7-8FE3-4E48-8871-77EFCB6945F7}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "SampleServer", "Socket Programming\Socket Programming.vcxproj", "{3044DFB7-8FE3-4E48-8871-77EFCB6945F7}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "EnzTCP", "EnzTCP\EnzTCP.vcxproj", "{702858AC-6210-495B-9F93-D7BB1ABF3785}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Enzo Chat Server", "Enzo Chat Server\Enzo Chat Server.vcxproj", "{F8379631-D7DE-4596-AE84-E25D7C4A4E36}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -31,6 +33,14 @@ Global
 		{702858AC-6210-495B-9F93-D7BB1ABF3785}.Release|x64.Build.0 = Release|x64
 		{702858AC-6210-495B-9F93-D7BB1ABF3785}.Release|x86.ActiveCfg = Release|Win32
 		{702858AC-6210-495B-9F93-D7BB1ABF3785}.Release|x86.Build.0 = Release|Win32
+		{F8379631-D7DE-4596-AE84-E25D7C4A4E36}.Debug|x64.ActiveCfg = Debug|x64
+		{F8379631-D7DE-4596-AE84-E25D7C4A4E36}.Debug|x64.Build.0 = Debug|x64
+		{F8379631-D7DE-4596-AE84-E25D7C4A4E36}.Debug|x86.ActiveCfg = Debug|Win32
+		{F8379631-D7DE-4596-AE84-E25D7C4A4E36}.Debug|x86.Build.0 = Debug|Win32
+		{F8379631-D7DE-4596-AE84-E25D7C4A4E36}.Release|x64.ActiveCfg = Release|x64
+		{F8379631-D7DE-4596-AE84-E25D7C4A4E36}.Release|x64.Build.0 = Release|x64
+		{F8379631-D7DE-4596-AE84-E25D7C4A4E36}.Release|x86.ActiveCfg = Release|Win32
+		{F8379631-D7DE-4596-AE84-E25D7C4A4E36}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

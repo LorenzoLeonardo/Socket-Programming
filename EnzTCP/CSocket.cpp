@@ -58,6 +58,7 @@ void CSocket::SetIP()
     struct in_addr ipAddr = pV4Addr->sin_addr;
 
     char str[INET_ADDRSTRLEN];
+    memset(str, 0, sizeof(str));
     inet_ntop(AF_INET, &ipAddr, str, INET_ADDRSTRLEN);
 
     m_ipAddress = str;
@@ -87,7 +88,7 @@ void CSocket::Send(string sendbuf)
     int iResult = 0;
     int nError = 0;
 
-    iResult = send(m_socket, sendbuf.c_str(), (int)sendbuf.length() + 1, 0);
+    iResult = send(m_socket, sendbuf.c_str(), (int)sendbuf.length(), 0);
     if (iResult == SOCKET_ERROR) {
         nError = WSAGetLastError();
         throw nError;

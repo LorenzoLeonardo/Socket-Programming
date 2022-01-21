@@ -6,7 +6,7 @@
 
 HANDLE OpenServer(string sport, NewConnection fncPtr)
 {
-    return (HANDLE) new CTCPListener(sport, fncPtr);
+    return new CTCPListener(sport, fncPtr);
 }
 
 void RunServer(HANDLE hHandle)
@@ -19,12 +19,16 @@ void CloseClientConnection(HANDLE hHandle)
 {
     CSocket* clientSocket = (CSocket*)hHandle;
 
-    delete clientSocket;
+    if(clientSocket != NULL)
+        delete clientSocket;
 }
 void CloseServer(HANDLE hHandle)
 {
     CTCPListener* listener = (CTCPListener*)hHandle;
 
-    listener->Stop();
-    delete listener;
+    if (listener != NULL)
+    {
+        listener->Stop();
+        delete listener;
+    }
 }

@@ -20,7 +20,7 @@ unsigned _stdcall HandleClientThreadFunc(void* pArguments)
     {
         if (g_vSocket[i] != pSocket)
         {
-            g_vSocket[i]->Send("\r\n"+ pSocket->GetIP() + " has joined the chat.");
+            g_vSocket[i]->Send(pSocket->GetIP() + " has joined the chat.\r\n");
         }
     }
     while (!(sData = pSocket->Receive()).empty())
@@ -29,7 +29,7 @@ unsigned _stdcall HandleClientThreadFunc(void* pArguments)
         {
             if (g_vSocket[i] != pSocket)
             {
-                g_vSocket[i]->Send("\r\n" + pSocket->GetIP()+" : "+ sData);
+                g_vSocket[i]->Send(pSocket->GetIP()+" : "+ sData+"\r\n");
             }
         }
     }
@@ -37,12 +37,12 @@ unsigned _stdcall HandleClientThreadFunc(void* pArguments)
     {
         if (g_vSocket[i] != pSocket)
         {
-            g_vSocket[i]->Send("\r\n" + pSocket->GetIP() + " has left the chat.");
+            g_vSocket[i]->Send(pSocket->GetIP() + " has left the chat.\r\n");
         }
     }
     g_vSocket.erase(std::remove(g_vSocket.begin(), g_vSocket.end(), pSocket), g_vSocket.end());
     
-    delete pSocket;
+    CloseClientConnection(pSocket);
     _endthreadex(0);
     return 0;
 }

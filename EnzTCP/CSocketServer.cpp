@@ -85,7 +85,7 @@ CSocket* CSocketServer::Accept()
     if (ClientSocket == INVALID_SOCKET) {
         nError = WSAGetLastError();
       //  closesocket(m_ListenSocket);
-        throw nError;
+        return NULL;
     }
     else
     {
@@ -93,8 +93,9 @@ CSocket* CSocketServer::Accept()
         pSocket->SetClientAddr(client_addr);
         string ip = pSocket->GetIP();
         string hostname = pSocket->GetHostName();
+        return pSocket;
     }
-    return pSocket;
+    
 }
 bool CSocketServer::Cleanup()
 {
