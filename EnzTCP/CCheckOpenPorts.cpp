@@ -10,9 +10,9 @@ CCheckOpenPorts::CCheckOpenPorts()
 	m_ipAddressTarget = "";
 	g_objPtrCCheckOpenPorts = this;
 }
-CCheckOpenPorts::CCheckOpenPorts(string ipTargetIPAddress, int nNumberOfPorts, FuncFindOpenPort *pfnPtr)
+CCheckOpenPorts::CCheckOpenPorts(string ipTargetIPAddress, int nNumberOfPorts, FuncFindOpenPort pfnPtr)
 {
-	m_pfnFindOpenPort = *pfnPtr;
+	m_pfnFindOpenPort = pfnPtr;
 	m_nNumPorts = nNumberOfPorts;
 	m_ipAddressTarget = ipTargetIPAddress;
 	g_objPtrCCheckOpenPorts = this;
@@ -28,6 +28,10 @@ string CCheckOpenPorts::GetIPAddress()
 map<thread*, int> CCheckOpenPorts::GetThreads()
 {
 	return m_mapThreads;
+}
+thread* CCheckOpenPorts::GetThreadMonitoring()
+{
+	return m_tMonitor;
 }
 void ThreadMonitorThreads(LPVOID pParam)
 {
@@ -46,6 +50,7 @@ void ThreadMonitorThreads(LPVOID pParam)
 		it++;
 	}
 	PDlg->clear();
+	delete g_objPtrCCheckOpenPorts->GetThreadMonitoring();
 	return;
 }
 bool CCheckOpenPorts::IsPortOpen(string ipAddress, string port)
@@ -64,11 +69,11 @@ void ThreadMultiFunc(LPVOID pParam)
 	if (g_objPtrCCheckOpenPorts->IsPortOpen(cs, pTmon->sPort))
 	{
 		//csRes = _T("Port (") + csPort + _T(") Of (") + cs + _T(") is open.\r\n");
-		g_objPtrCCheckOpenPorts->m_pfnFindOpenPort((char*)pTmon->sPort.c_str(), stoi(pTmon->sPort), true);
+		g_objPtrCCheckOpenPorts->m_pfnFindOpenPort((char*)cs.c_str(), stoi(pTmon->sPort), true);
 	}
 	else
 	{
-		g_objPtrCCheckOpenPorts->m_pfnFindOpenPort((char*)pTmon->sPort.c_str(), stoi(pTmon->sPort), false);
+		g_objPtrCCheckOpenPorts->m_pfnFindOpenPort((char*)cs.c_str(), stoi(pTmon->sPort), false);
 	}
 	return;
 }

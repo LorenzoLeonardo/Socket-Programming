@@ -34,4 +34,4 @@ extern "C" ENZTCPLIBRARY_API HANDLE  OpenServer(const char * sport, FuncNewConne
 extern "C" ENZTCPLIBRARY_API  void	 RunServer(HANDLE);
 extern "C" ENZTCPLIBRARY_API  void   CloseServer(HANDLE);
 extern "C" ENZTCPLIBRARY_API  void   CloseClientConnection(HANDLE);
-extern "C" ENZTCPLIBRARY_API  void   CheckOpenPorts(const char* ipAddress, int nNumPorts, FuncFindOpenPort pfnPtr);
+extern "C" ENZTCPLIBRARY_API  void   CheckOpenPorts(char* ipAddress, int nNumPorts, FuncFindOpenPort);

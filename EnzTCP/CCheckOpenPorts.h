@@ -14,13 +14,13 @@ class CCheckOpenPorts
 {
 public :
 	CCheckOpenPorts();
-	CCheckOpenPorts(string ipTargetIPAddress, int nNumberOfPorts, FuncFindOpenPort* pfnPtr);
+	CCheckOpenPorts(string ipTargetIPAddress, int nNumberOfPorts, FuncFindOpenPort pfnPtr);
 	~CCheckOpenPorts();
 	FuncFindOpenPort m_pfnFindOpenPort;
 	void StartSearchingOpenPorts();
 	string GetIPAddress();
 	map<thread*, int> GetThreads();
-
+	thread* GetThreadMonitoring();
 	bool IsPortOpen(string ipAddress, string port);
 private:
 	string m_ipAddressTarget;

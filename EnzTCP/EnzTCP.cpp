@@ -48,7 +48,7 @@ void ENZTCPLIBRARY_API CloseServer(HANDLE hHandle)
         delete listener;
     }
 }
-void ENZTCPLIBRARY_API CheckOpenPorts(const char* ipAddress, int nNumPorts, FuncFindOpenPort *pfnPtr)
+void ENZTCPLIBRARY_API CheckOpenPorts(char* ipAddress, int nNumPorts, FuncFindOpenPort pfnPtr)
 {
     string sAddress(ipAddress);
 
