@@ -48,14 +48,22 @@ void ENZTCPLIBRARY_API CloseServer(HANDLE hHandle)
         delete listener;
     }
 }
-void ENZTCPLIBRARY_API CheckOpenPorts(char* ipAddress, int nNumPorts, FuncFindOpenPort pfnPtr)
+
+HANDLE ENZTCPLIBRARY_API EnumOpenPorts(char* ipAddress, int nNumPorts, FuncFindOpenPort pfnPtr)
 {
     string sAddress(ipAddress);
 
     CCheckOpenPorts* pOpenPorts = new CCheckOpenPorts(sAddress, nNumPorts, pfnPtr);
-
     pOpenPorts->StartSearchingOpenPorts();
+    return (HANDLE)pOpenPorts;
 }
-
-
+void ENZTCPLIBRARY_API CleanEnumOpenPorts(HANDLE hHandle)
+{
+    if (hHandle)
+    {
+        CCheckOpenPorts* pOpenPorts = ((CCheckOpenPorts*)(hHandle));
+        delete pOpenPorts;
+        pOpenPorts = NULL;
+    }
+}
 

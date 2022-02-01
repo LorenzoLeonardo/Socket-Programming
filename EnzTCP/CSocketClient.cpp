@@ -12,12 +12,12 @@ CSocketClient::~CSocketClient()
 {
 }
 
-bool CSocketClient::ConnectToServer(string ipServer, string sPort)
+bool CSocketClient::ConnectToServer(string ipServer, string sPort, int *pLastError)
 {
 	WSADATA wsaData;
 	int iResult;
 	SOCKET ConnectSocket = INVALID_SOCKET;
-
+	*pLastError = 0;
 	// Initialize Winsock
 	iResult = WSAStartup(MAKEWORD(2, 2), &wsaData);
 	if (iResult != 0) {
@@ -36,9 +36,8 @@ bool CSocketClient::ConnectToServer(string ipServer, string sPort)
 
 	iResult = getaddrinfo(ipServer.c_str(), sPort.c_str(), &hints, &result);
 	if (iResult != 0) {
-		printf("getaddrinfo failed: %d\n", iResult);
+		*pLastError = WSAGetLastError();
 		WSACleanup();
-		//mtx.unlock();
 		return false;
 	}
 
@@ -51,7 +50,7 @@ bool CSocketClient::ConnectToServer(string ipServer, string sPort)
 		ptr->ai_protocol);
 
 	if (ConnectSocket == INVALID_SOCKET) {
-		printf("Error at socket(): %ld\n", WSAGetLastError());
+		*pLastError = WSAGetLastError();
 		freeaddrinfo(result);
 		WSACleanup();
 		return false;
@@ -59,6 +58,8 @@ bool CSocketClient::ConnectToServer(string ipServer, string sPort)
 
 	iResult = connect(ConnectSocket, ptr->ai_addr, (int)ptr->ai_addrlen);
 	if (iResult == SOCKET_ERROR) {
+		*pLastError = WSAGetLastError();
+
 		freeaddrinfo(result);
 		closesocket(ConnectSocket);
 		ConnectSocket = INVALID_SOCKET;

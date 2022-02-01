@@ -21,7 +21,7 @@ public :
 	string GetIPAddress();
 	map<thread*, int> GetThreads();
 	thread* GetThreadMonitoring();
-	bool IsPortOpen(string ipAddress, string port);
+	bool IsPortOpen(string ipAddress, string port, int* pLastError);
 private:
 	string m_ipAddressTarget;
 	int m_nNumPorts;

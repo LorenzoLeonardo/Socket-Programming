@@ -53,27 +53,27 @@ void ThreadMonitorThreads(LPVOID pParam)
 	delete g_objPtrCCheckOpenPorts->GetThreadMonitoring();
 	return;
 }
-bool CCheckOpenPorts::IsPortOpen(string ipAddress, string port)
+bool CCheckOpenPorts::IsPortOpen(string ipAddress, string port, int *pLastError)
 {
 	CSocketClient clientSock(ipAddress);
 
-	return clientSock.ConnectToServer(ipAddress, port);
+	return clientSock.ConnectToServer(ipAddress, port, pLastError);
 }
 void ThreadMultiFunc(LPVOID pParam)
 {
 	string cs;
 	THREADMON_t* pTmon = (THREADMON_t*)pParam;
-
+	int nLastError = 0;
 	cs = g_objPtrCCheckOpenPorts->GetIPAddress();
 
-	if (g_objPtrCCheckOpenPorts->IsPortOpen(cs, pTmon->sPort))
+	if (g_objPtrCCheckOpenPorts->IsPortOpen(cs, pTmon->sPort,&nLastError))
 	{
 		//csRes = _T("Port (") + csPort + _T(") Of (") + cs + _T(") is open.\r\n");
-		g_objPtrCCheckOpenPorts->m_pfnFindOpenPort((char*)cs.c_str(), stoi(pTmon->sPort), true);
+		g_objPtrCCheckOpenPorts->m_pfnFindOpenPort((char*)cs.c_str(), stoi(pTmon->sPort), true, nLastError);
 	}
 	else
 	{
-		g_objPtrCCheckOpenPorts->m_pfnFindOpenPort((char*)cs.c_str(), stoi(pTmon->sPort), false);
+		g_objPtrCCheckOpenPorts->m_pfnFindOpenPort((char*)cs.c_str(), stoi(pTmon->sPort), false, nLastError);
 	}
 	return;
 }

@@ -10,6 +10,6 @@ public:
 	CSocketClient(string ipServer);
 	~CSocketClient();
 
-	bool ConnectToServer(string ipServer, string);
+	bool ConnectToServer(string ipServer, string, int *pLastError);
 };
 

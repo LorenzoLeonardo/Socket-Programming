@@ -10,16 +10,81 @@
 HMODULE dll_handle;
 using namespace std;
 
-typedef  void(*LPCheckOpenPorts)(const char* , int , FuncFindOpenPort);
+typedef  HANDLE(*LPEnumOpenPorts)(const char* , int , FuncFindOpenPort);
+typedef  void(*LPCleanEnumOpenPorts)(HANDLE hHandle);
+
+LPEnumOpenPorts pfnPtrEnumOpenPorts;
+LPCleanEnumOpenPorts pfnPtrCleanEnumOpenPorts;
+
+WCHAR* convert_to_wstring(const char* str);
+char* convert_from_wstring(const WCHAR* wstr);
+
+char* convert_from_wstring(const WCHAR* wstr)
+{
+	int wstr_len = (int)wcslen(wstr);
+	int num_chars = WideCharToMultiByte(CP_UTF8, 0, wstr, wstr_len, NULL, 0, NULL, NULL);
+	CHAR* strTo = (CHAR*)malloc((num_chars + 1) * sizeof(CHAR));
+	if (strTo)
+	{
+		WideCharToMultiByte(CP_UTF8, 0, wstr, wstr_len, strTo, num_chars, NULL, NULL);
+		strTo[num_chars] = '\0';
+	}
+	return strTo;
+}
+WCHAR* convert_to_wstring(const char* str)
+{
+	int size_needed = MultiByteToWideChar(CP_UTF8, 0, str, (int)strlen(str), NULL, 0);
+	WCHAR* wstrTo = (WCHAR*)malloc(size_needed);
+	MultiByteToWideChar(CP_UTF8, 0, &str[0], (int)strlen(str), wstrTo, size_needed);
+	return wstrTo;
+}
+#ifdef _UNICODE
+wstring GetLastErrorMessageString(int nGetLastError)
+{
+	DWORD dwSize = 0;
+	TCHAR lpMessage[0xFF];
+
+	dwSize  = FormatMessage(FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,   // flags
+		NULL,                // lpsource
+		nGetLastError,                 // message id
+		MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),    // languageid
+		lpMessage,              // output buffer
+		sizeof(lpMessage),     // size of msgbuf, bytes
+		NULL);
+
+	wstring str(lpMessage);
+	return str;
+}
+#else
+sstring GetLastErrorMessageString(int nGetLastError)
+{
+	DWORD dwSize = 0;
+	TCHAR lpMessage[0xFF];
+
+	dwSize = FormatMessage(FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,   // flags
+		NULL,                // lpsource
+		nGetLastError,                 // message id
+		MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),    // languageid
+		lpMessage,              // output buffer
+		sizeof(lpMessage),     // size of msgbuf, bytes
+		NULL);
+
+	sstring str(lpMessage);
+	return str;
+}
+#endif
 
 
-LPCheckOpenPorts pfnPtrCheckOpenPorts;
 
 mutex mt;
-void CallBackFindOpenPort(char* ipAddress, int nPort, bool isOpen)
+void CallBackFindOpenPort(char* ipAddress, int nPort, bool isOpen, int nGetLastError)
 {
 	mt.lock();
-	cout << ipAddress << " port:" << nPort << " is " << isOpen << endl;
+	if(isOpen)
+		wcout << convert_to_wstring(ipAddress) << " port:" << nPort << " is " << isOpen << endl;
+	else
+		wcout << convert_to_wstring(ipAddress) << L" port:" << nPort << L" "<< GetLastErrorMessageString(nGetLastError);
+
 	mt.unlock();
 }
 int main()
@@ -28,11 +93,15 @@ int main()
 	dll_handle = LoadLibrary(L"EnzTCP.dll");
 	if (dll_handle)
 	{
-		pfnPtrCheckOpenPorts = (LPCheckOpenPorts)GetProcAddress(dll_handle, "CheckOpenPorts");
+
+		pfnPtrEnumOpenPorts = (LPEnumOpenPorts)GetProcAddress(dll_handle, "EnumOpenPorts");
+		pfnPtrCleanEnumOpenPorts = (LPCleanEnumOpenPorts)GetProcAddress(dll_handle, "CleanEnumOpenPorts");
 	}
-	pfnPtrCheckOpenPorts("192.168.0.1", 5000, CallBackFindOpenPort);
+	HANDLE h = pfnPtrEnumOpenPorts("192.168.0.1", 5000, CallBackFindOpenPort);
 	
 	_getch();
+
+	pfnPtrCleanEnumOpenPorts(h);
 	return 0;
 }
 
