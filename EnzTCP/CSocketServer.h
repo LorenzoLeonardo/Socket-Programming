@@ -2,8 +2,10 @@
 
 #include "CSocket.h"
 #include <process.h>
-
+#include <vector>
+#include <string>
 using namespace std;
+
 
 class CSocketServer
 {
@@ -11,7 +13,7 @@ private:
 	vector<CSocket> v_clientSocket;
 	
 	SOCKET m_ListenSocket;
-	std::string m_serverPort;
+	string m_serverPort;
 public:
 	CSocketServer()
 	{

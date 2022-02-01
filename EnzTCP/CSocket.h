@@ -3,13 +3,11 @@
 #include <ws2tcpip.h>
 #include <iphlpapi.h>
 #include <string>
-#include <vector>
 #include <windows.h>
-
 
 using namespace std;
 
-class ENZTCPLIBRARY_API CSocket : ISocket
+class CSocket : ISocket
 {
 private:
 	SOCKET m_socket;

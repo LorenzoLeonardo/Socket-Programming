@@ -19,7 +19,7 @@ BOOL APIENTRY DllMain(HMODULE hModule,
     return TRUE;
 }
 
-HANDLE ENZTCPLIBRARY_API OpenServer(const char* sport, NewConnection pfnPtr)
+HANDLE ENZTCPLIBRARY_API OpenServer(const char* sport, FuncNewConnection pfnPtr)
 {
     CTCPListener* Ptr = new CTCPListener(sport, pfnPtr);
     return (HANDLE)Ptr;
@@ -47,6 +47,12 @@ void ENZTCPLIBRARY_API CloseServer(HANDLE hHandle)
         listener->Stop();
         delete listener;
     }
+}
+void ENZTCPLIBRARY_API CheckOpenPorts(const char* ipAddress, FuncFindOpenPort pfnPtr)
+{
+  //  CTCPListener* listener = (CTCPListener*)hHandle;
+
+
 }
 
 

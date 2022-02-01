@@ -27,9 +27,10 @@ public:
 
 
 
-typedef void (*NewConnection)(void*);
+typedef void (*FuncNewConnection)(void*);
+typedef void (*FuncFindOpenPort)(void*);
 
-extern "C" ENZTCPLIBRARY_API HANDLE  OpenServer(const char * sport, NewConnection);
+extern "C" ENZTCPLIBRARY_API HANDLE  OpenServer(const char * sport, FuncNewConnection);
 extern "C" ENZTCPLIBRARY_API  void	 RunServer(HANDLE);
 extern "C" ENZTCPLIBRARY_API  void   CloseServer(HANDLE);
 extern "C" ENZTCPLIBRARY_API  void   CloseClientConnection(HANDLE);

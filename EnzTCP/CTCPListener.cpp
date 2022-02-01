@@ -2,14 +2,14 @@
 #include "CTCPListener.h"
 
 
-CTCPListener::CTCPListener(string ipAddress, string port, NewConnection handler) :
+CTCPListener::CTCPListener(string ipAddress, string port, FuncNewConnection handler) :
 	m_ipAddress(ipAddress), m_port(port), m_pfnMessageReceived(handler)
 {
     m_bIsRunning = true;
     m_socketServer = new CSocketServer(m_port);
 }
 
-CTCPListener::CTCPListener(string port, NewConnection handler) :
+CTCPListener::CTCPListener(string port, FuncNewConnection handler) :
     m_port(port), m_pfnMessageReceived(handler)
 {
     m_bIsRunning = true;

@@ -10,7 +10,7 @@
 
 using namespace std;
 
-typedef void (*NewConnection)(void*);
+typedef void (*FuncNewConnection)(void*);
 
 class CTCPListener
 {
@@ -20,12 +20,12 @@ private:
 	
 	CSocketServer*  m_socketServer;
 	bool m_bIsRunning;
-	NewConnection m_pfnMessageReceived;
+	FuncNewConnection m_pfnMessageReceived;
 
 public:
 	
-	CTCPListener(string ipAddress, string port, NewConnection handler);
-	CTCPListener(string port, NewConnection handler);
+	CTCPListener(string ipAddress, string port, FuncNewConnection handler);
+	CTCPListener(string port, FuncNewConnection handler);
 	~CTCPListener();
 
 	
