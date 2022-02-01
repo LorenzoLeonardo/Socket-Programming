@@ -1,7 +1,7 @@
 #include "pch.h"
 #include "EnzTCP.h"
 #include "CTCPListener.h"
-
+#include "CCheckOpenPorts.h"
 
 BOOL APIENTRY DllMain(HMODULE hModule,
     DWORD  ul_reason_for_call,
@@ -48,11 +48,13 @@ void ENZTCPLIBRARY_API CloseServer(HANDLE hHandle)
         delete listener;
     }
 }
-void ENZTCPLIBRARY_API CheckOpenPorts(const char* ipAddress, FuncFindOpenPort pfnPtr)
+void ENZTCPLIBRARY_API CheckOpenPorts(const char* ipAddress, int nNumPorts, FuncFindOpenPort *pfnPtr)
 {
-  //  CTCPListener* listener = (CTCPListener*)hHandle;
+    string sAddress(ipAddress);
 
+    CCheckOpenPorts* pOpenPorts = new CCheckOpenPorts(sAddress, nNumPorts, pfnPtr);
 
+    pOpenPorts->StartSearchingOpenPorts();
 }
 
 

@@ -28,9 +28,10 @@ public:
 
 
 typedef void (*FuncNewConnection)(void*);
-typedef void (*FuncFindOpenPort)(void*);
+typedef void (*FuncFindOpenPort)(char* , int, bool );
 
 extern "C" ENZTCPLIBRARY_API HANDLE  OpenServer(const char * sport, FuncNewConnection);
 extern "C" ENZTCPLIBRARY_API  void	 RunServer(HANDLE);
 extern "C" ENZTCPLIBRARY_API  void   CloseServer(HANDLE);
 extern "C" ENZTCPLIBRARY_API  void   CloseClientConnection(HANDLE);
+extern "C" ENZTCPLIBRARY_API  void   CheckOpenPorts(const char* ipAddress, int nNumPorts, FuncFindOpenPort pfnPtr);

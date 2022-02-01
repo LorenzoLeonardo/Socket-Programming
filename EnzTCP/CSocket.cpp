@@ -3,6 +3,14 @@
 
 using namespace std;
 
+CSocket::CSocket()
+{
+    m_socket = NULL;
+    memset(&m_addr, 0, sizeof(m_addr));
+    m_hostname = "";
+    m_ipAddress = "";
+}
+
 CSocket::CSocket(SOCKET s)
 {
     m_socket = s;
@@ -62,7 +70,6 @@ void CSocket::SetIP()
     inet_ntop(AF_INET, &ipAddr, str, INET_ADDRSTRLEN);
 
     m_ipAddress = str;
-
 }
 
 

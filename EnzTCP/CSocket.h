@@ -9,17 +9,17 @@ using namespace std;
 
 class CSocket : ISocket
 {
-private:
+protected:
 	SOCKET m_socket;
 	struct sockaddr m_addr;
 	string m_hostname;
 	string m_ipAddress;
 	string dataRecv;
-private:
 	void SetHostname();
 	void SetIP();
 
 public:
+	CSocket();
 	CSocket(SOCKET s);
 	~CSocket();
 	SOCKET  GetSocket();
