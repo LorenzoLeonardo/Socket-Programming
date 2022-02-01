@@ -20,9 +20,9 @@ BOOL APIENTRY DllMain( HMODULE hModule,
     return TRUE;
 }
 
-HANDLE ENZTCPLIBRARY_API OpenServer(const char* sport, NewConnection fncPtr)
+HANDLE ENZTCPLIBRARY_API OpenServer(const char* sport, NewConnection pfnPtr)
 {
-    CTCPListener* Ptr = new CTCPListener(sport, fncPtr);
+    CTCPListener* Ptr = new CTCPListener(sport, pfnPtr);
     return (HANDLE)Ptr;
 }
 
