@@ -25,13 +25,13 @@ void  CSocket::SetClientAddr(struct sockaddr addr)
     SetIP();
     SetHostname();
 }
-string CSocket::GetIP()
+const char* CSocket::GetIP()
 {
-    return m_ipAddress;
+    return m_ipAddress.c_str();
 }
-string CSocket::GetHostName()
+const char* CSocket::GetHostName()
 {
-    return m_hostname;
+    return m_hostname.c_str();
 }
 void CSocket::SetHostname()
 {
@@ -66,7 +66,7 @@ void CSocket::SetIP()
 }
 
 
-string CSocket::Receive()
+const char* CSocket::Receive()
 {
     int iResult = 0;
     int nError = 0;
@@ -80,15 +80,15 @@ string CSocket::Receive()
         nError = WSAGetLastError();
         throw nError;
     }
-    string data(recvbuf);
-    return data;
+    dataRecv = recvbuf;
+    return dataRecv.c_str();
 }
-void CSocket::Send(string sendbuf)
+void CSocket::Send(char* sendbuf)
 {
     int iResult = 0;
     int nError = 0;
 
-    iResult = send(m_socket, sendbuf.c_str(), (int)sendbuf.length(), 0);
+    iResult = send(m_socket, sendbuf, (int)strlen(sendbuf), 0);
     if (iResult == SOCKET_ERROR) {
         nError = WSAGetLastError();
         throw nError;

@@ -3,18 +3,23 @@
 //
 
 #pragma once
-#include "..\EnzTCP\CSocket.h"
+#include "..\EnzTCP\ISocket.h"
+//#include "..\EnzTCP\EnzTCP.h"
+
 #include <vector>
 #include <string>
-#ifdef _DEBUG
-#pragma comment(lib, "..\\x64\\Debug\\EnzTCP.lib")
-#else
-#pragma comment(lib, "..\\x64\\Release\\EnzTCP.lib")
-#endif
 
 using namespace std;
 
 
+/*#ifdef _DEBUG
+#pragma comment(lib, "..\\x64\\Debug\\EnzTCP.lib")
+#else
+#pragma comment(lib, "..\\x64\\Release\\EnzTCP.lib")
+#endif*/
+
+WCHAR* convert_to_wstring(const char* str);
+char* convert_from_wstring(const WCHAR* wstr);
 
 // CEnzoChatServerDlg dialog
 class CEnzoChatServerDlg : public CDialog
@@ -26,6 +31,8 @@ public:
 	{
 		delete m_vSocket;
 	}
+	HMODULE dll_handle;
+
 	
 	void DisplayConnectedClients()
 	{
@@ -38,9 +45,9 @@ public:
 		
 		for (int nRow = 0; nRow < m_vSocket->size(); nRow++)
 		{
-			CString ipAddress((*m_vSocket)[nRow]->GetIP().c_str());
+			CString ipAddress((*m_vSocket)[nRow]->GetIP());
 			CString socketID(to_string((*m_vSocket)[nRow]->GetSocket()).c_str());
-			CString hostName((*m_vSocket)[nRow]->GetHostName().c_str());
+			CString hostName((*m_vSocket)[nRow]->GetHostName());
 			client = ipAddress + _T("(") + socketID + _T(")") + _T("(") + hostName + _T(")");
 
 			m_ctrlListConnected.InsertItem(LVIF_TEXT | LVIF_STATE, nRow,
@@ -91,7 +98,6 @@ protected:
 	HANDLE m_ServerHandle;
 	vector<ISocket*> *m_vSocket;
 
-	char* convert_from_wstring(const WCHAR* wstr);
 	// Generated message map functions
 	virtual BOOL OnInitDialog();
 	afx_msg void OnSysCommand(UINT nID, LPARAM lParam);

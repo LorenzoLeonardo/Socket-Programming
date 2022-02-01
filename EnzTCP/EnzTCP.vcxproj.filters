@@ -33,6 +33,9 @@
     <ClInclude Include="CTCPListener.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="ISocket.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="dllmain.cpp">

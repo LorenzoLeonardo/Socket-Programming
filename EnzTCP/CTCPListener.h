@@ -6,6 +6,7 @@
 #include <stdio.h>
 #include <string>
 #include <iostream>
+#include "ISocket.h"
 
 using namespace std;
 

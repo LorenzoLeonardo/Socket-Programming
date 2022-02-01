@@ -7,6 +7,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "EnzTCP", "EnzTCP\EnzTCP.vcx
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Enzo Chat Server", "Enzo Chat Server\Enzo Chat Server.vcxproj", "{F8379631-D7DE-4596-AE84-E25D7C4A4E36}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "SendingEmail", "SendingEmail\SendingEmail.vcxproj", "{CA85832A-EE64-416D-800F-8B80E3EB7381}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
@@ -31,6 +33,14 @@ Global
 		{F8379631-D7DE-4596-AE84-E25D7C4A4E36}.Release|x64.Build.0 = Release|x64
 		{F8379631-D7DE-4596-AE84-E25D7C4A4E36}.Release|x86.ActiveCfg = Release|Win32
 		{F8379631-D7DE-4596-AE84-E25D7C4A4E36}.Release|x86.Build.0 = Release|Win32
+		{CA85832A-EE64-416D-800F-8B80E3EB7381}.Debug|x64.ActiveCfg = Debug|x64
+		{CA85832A-EE64-416D-800F-8B80E3EB7381}.Debug|x64.Build.0 = Debug|x64
+		{CA85832A-EE64-416D-800F-8B80E3EB7381}.Debug|x86.ActiveCfg = Debug|Win32
+		{CA85832A-EE64-416D-800F-8B80E3EB7381}.Debug|x86.Build.0 = Debug|Win32
+		{CA85832A-EE64-416D-800F-8B80E3EB7381}.Release|x64.ActiveCfg = Release|x64
+		{CA85832A-EE64-416D-800F-8B80E3EB7381}.Release|x64.Build.0 = Release|x64
+		{CA85832A-EE64-416D-800F-8B80E3EB7381}.Release|x86.ActiveCfg = Release|Win32
+		{CA85832A-EE64-416D-800F-8B80E3EB7381}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

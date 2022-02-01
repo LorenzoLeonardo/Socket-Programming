@@ -1,6 +1,7 @@
 // dllmain.cpp : Defines the entry point for the DLL application.
 #include "pch.h"
-
+#include "EnzTCP.h"
+#include "CTCPListener.h"
 
 
 BOOL APIENTRY DllMain( HMODULE hModule,
@@ -19,3 +20,32 @@ BOOL APIENTRY DllMain( HMODULE hModule,
     return TRUE;
 }
 
+HANDLE ENZTCPLIBRARY_API OpenServer(const char* sport, NewConnection fncPtr)
+{
+    CTCPListener* Ptr = new CTCPListener(sport, fncPtr);
+    return (HANDLE)Ptr;
+}
+
+void ENZTCPLIBRARY_API RunServer(HANDLE hHandle)
+{
+    CTCPListener* listener = (CTCPListener*)hHandle;
+
+    listener->Run();
+}
+void ENZTCPLIBRARY_API CloseClientConnection(HANDLE hHandle)
+{
+    CSocket* clientSocket = (CSocket*)hHandle;
+
+    if (clientSocket != NULL)
+        delete clientSocket;
+}
+void ENZTCPLIBRARY_API CloseServer(HANDLE hHandle)
+{
+    CTCPListener* listener = (CTCPListener*)hHandle;
+
+    if (listener != NULL)
+    {
+        listener->Stop();
+        delete listener;
+    }
+}
