@@ -156,14 +156,12 @@
     <ClInclude Include="CTCPListener.h" />
     <ClInclude Include="EnzTCP.h" />
     <ClInclude Include="framework.h" />
-    <ClInclude Include="ISocket.h" />
     <ClInclude Include="pch.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="CSocket.cpp" />
     <ClCompile Include="CSocketServer.cpp" />
     <ClCompile Include="CTCPListener.cpp" />
-    <ClCompile Include="dllmain.cpp" />
     <ClCompile Include="EnzTCP.cpp" />
     <ClCompile Include="pch.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>

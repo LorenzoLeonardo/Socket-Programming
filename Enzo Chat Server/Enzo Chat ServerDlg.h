@@ -3,20 +3,13 @@
 //
 
 #pragma once
-#include "..\EnzTCP\ISocket.h"
-//#include "..\EnzTCP\EnzTCP.h"
+#include "..\EnzTCP\EnzTCP.h"
 
 #include <vector>
 #include <string>
 
 using namespace std;
 
-
-/*#ifdef _DEBUG
-#pragma comment(lib, "..\\x64\\Debug\\EnzTCP.lib")
-#else
-#pragma comment(lib, "..\\x64\\Release\\EnzTCP.lib")
-#endif*/
 
 WCHAR* convert_to_wstring(const char* str);
 char* convert_from_wstring(const WCHAR* wstr);
