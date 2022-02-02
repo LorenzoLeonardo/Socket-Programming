@@ -134,9 +134,7 @@ int main()
 	int ttl = DEFAULT_TTL;
 
 	ConnectSocket = socket(AF_INET, SOCK_RAW, IPPROTO_ICMP);
-	//ConnectSocket = WSASocket(AF_UNSPEC, SOCK_RAW, IPPROTO_ICMP, 0, 0, 0);
-	//if (SOCKET_ERROR == setsockopt(ConnectSocket, IPPROTO_IP, IP_TTL, (const char*)&ttl, sizeof(ttl)))
-	//	return 0;
+
 
 	struct addrinfo* result = NULL, * ptr = NULL, hints;
 	
