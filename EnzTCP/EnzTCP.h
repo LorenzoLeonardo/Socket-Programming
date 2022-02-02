@@ -26,7 +26,7 @@ public:
 };
 
 
-
+typedef void (*CallbackLocalAreaListener)(const char* , const char*, bool );
 typedef void (*FuncNewConnection)(void*);
 typedef void (*FuncFindOpenPort)(char* , int, bool, int);
 
@@ -36,4 +36,5 @@ extern "C" ENZTCPLIBRARY_API	void		CloseServer(HANDLE);
 extern "C" ENZTCPLIBRARY_API	void		CloseClientConnection(HANDLE);
 extern "C" ENZTCPLIBRARY_API	void		EnumOpenPorts(char* ipAddress, int nNumPorts, FuncFindOpenPort);
 extern "C" ENZTCPLIBRARY_API	bool		IsPortOpen(char* ipAddress, int nNumPorts, int* pnLastError);
-
+extern "C" ENZTCPLIBRARY_API	void        StartLocalAreaListening(const char* ipAddress, CallbackLocalAreaListener fnpPtr);
+extern "C" ENZTCPLIBRARY_API	void		StopLocalAreaListening();

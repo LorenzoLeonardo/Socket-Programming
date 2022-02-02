@@ -3,8 +3,10 @@
 #include "CTCPListener.h"
 #include "CCheckOpenPorts.h"
 #include "CSocketClient.h"
+#include "CLocalAreaListener.h"
 
 CCheckOpenPorts* g_pOpenPorts = NULL;
+CLocalAreaListener* g_pLocalAreaListener = NULL;
 
 BOOL APIENTRY DllMain(HMODULE hModule,
     DWORD  ul_reason_for_call,
@@ -19,6 +21,11 @@ BOOL APIENTRY DllMain(HMODULE hModule,
         {
             delete g_pOpenPorts;
             g_pOpenPorts = NULL;
+        }
+        if (g_pLocalAreaListener != NULL)
+        {
+            delete g_pLocalAreaListener;
+            g_pLocalAreaListener = NULL;
         }
         break;
     }
@@ -76,5 +83,23 @@ bool ENZTCPLIBRARY_API IsPortOpen(char* ipAddress, int nNumPorts, int *pnlastErr
 
    CSocketClient port;
     return port.ConnectToServer(sAddress, to_string(nNumPorts), pnlastError);
+}
+
+void ENZTCPLIBRARY_API StartLocalAreaListening(const char* ipAddress, CallbackLocalAreaListener fnpPtr)
+{
+    if (g_pLocalAreaListener != NULL)
+    {
+        delete g_pLocalAreaListener;
+        g_pLocalAreaListener = NULL;
+    }
+    g_pLocalAreaListener = new CLocalAreaListener(ipAddress, fnpPtr);
+    g_pLocalAreaListener->Start();
+}
+void ENZTCPLIBRARY_API StopLocalAreaListening()
+{
+    if (g_pLocalAreaListener != NULL)
+    {
+        g_pLocalAreaListener->Stop();
+    }
 }
 

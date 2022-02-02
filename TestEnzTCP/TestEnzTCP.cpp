@@ -9,7 +9,7 @@
 #include <mutex>
 #include <ws2tcpip.h>
 #include <iphlpapi.h>
-
+#include <windows.h>
 #include <string>
 using namespace std;
 #ifdef _MSC_VER
@@ -116,8 +116,7 @@ void init_ping_packet(ICMPHeader* icmp_hdr, int packet_size, int seq_no)
 	// Calculate a checksum on the result
 	icmp_hdr->checksum = ip_checksum((USHORT*)icmp_hdr, packet_size);
 }
-
-int main()
+bool Test()
 {
 	string m_ipAddress = "192.168.0.104";
 
@@ -137,7 +136,7 @@ int main()
 
 
 	struct addrinfo* result = NULL, * ptr = NULL, hints;
-	
+
 	ZeroMemory(&hints, sizeof(hints));
 	hints.ai_family = AF_INET;
 	hints.ai_socktype = SOCK_RAW;
@@ -152,10 +151,10 @@ int main()
 	ICMPHeader* send_buf = 0;
 	IPHeader* recv_buf = 0;
 
-	
+
 	packet_size = max(sizeof(ICMPHeader),
 		min(MAX_PING_DATA_SIZE, (unsigned int)packet_size));
-	
+
 	allocate_buffers(send_buf, recv_buf, packet_size);
 
 	init_ping_packet(send_buf, packet_size, 0);
@@ -181,8 +180,37 @@ int main()
 	closesocket(ConnectSocket);
 	WSACleanup();
 	// Resolve the server address and port
+}
+
+typedef void (* FNStartLocalAreaListening)(const char* ipAddress, CallbackLocalAreaListener fnpPtr);
+typedef void (*FNStopLocalAreaListening)();
+
+FNStartLocalAreaListening pfnPtrStartLocalAreaListening;
+FNStopLocalAreaListening pfnPtrStopLocalAreaListening;
+
+mutex mtx;
+void CallbackLocalArea(const char* ip, const char* host, bool bOpen)
+{
+	mtx.lock();
+	if(bOpen)
+		cout << ip << " " << host<<" "<< bOpen << endl;
+	mtx.unlock();
+}
+int main()
+{
+	HMODULE dll_handle = LoadLibraryA("EnzTCP.dll");
+	if (dll_handle)
+	{
 
 
+		pfnPtrStartLocalAreaListening = (FNStartLocalAreaListening)GetProcAddress(dll_handle, "StartLocalAreaListening");
+		pfnPtrStopLocalAreaListening = (FNStopLocalAreaListening)GetProcAddress(dll_handle, "StopLocalAreaListening");
+	}
+	pfnPtrStartLocalAreaListening("192.168.0.1", CallbackLocalArea);
+	_getch();
+
+	pfnPtrStopLocalAreaListening();
+	_getch();
 	return 0;
 }
 
