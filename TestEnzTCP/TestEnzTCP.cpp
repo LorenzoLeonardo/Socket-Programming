@@ -7,101 +7,184 @@
 #include <stdio.h>
 #include <conio.h>
 #include <mutex>
-HMODULE dll_handle;
+#include <ws2tcpip.h>
+#include <iphlpapi.h>
+
+#include <string>
 using namespace std;
-
-typedef  HANDLE(*LPEnumOpenPorts)(const char* , int , FuncFindOpenPort);
-typedef  void(*LPCleanEnumOpenPorts)(HANDLE hHandle);
-
-LPEnumOpenPorts pfnPtrEnumOpenPorts;
-LPCleanEnumOpenPorts pfnPtrCleanEnumOpenPorts;
-
-WCHAR* convert_to_wstring(const char* str);
-char* convert_from_wstring(const WCHAR* wstr);
-
-char* convert_from_wstring(const WCHAR* wstr)
-{
-	int wstr_len = (int)wcslen(wstr);
-	int num_chars = WideCharToMultiByte(CP_UTF8, 0, wstr, wstr_len, NULL, 0, NULL, NULL);
-	CHAR* strTo = (CHAR*)malloc((num_chars + 1) * sizeof(CHAR));
-	if (strTo)
-	{
-		WideCharToMultiByte(CP_UTF8, 0, wstr, wstr_len, strTo, num_chars, NULL, NULL);
-		strTo[num_chars] = '\0';
-	}
-	return strTo;
-}
-WCHAR* convert_to_wstring(const char* str)
-{
-	int size_needed = MultiByteToWideChar(CP_UTF8, 0, str, (int)strlen(str), NULL, 0);
-	WCHAR* wstrTo = (WCHAR*)malloc(size_needed);
-	MultiByteToWideChar(CP_UTF8, 0, &str[0], (int)strlen(str), wstrTo, size_needed);
-	return wstrTo;
-}
-#ifdef _UNICODE
-wstring GetLastErrorMessageString(int nGetLastError)
-{
-	DWORD dwSize = 0;
-	TCHAR lpMessage[0xFF];
-
-	dwSize  = FormatMessage(FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,   // flags
-		NULL,                // lpsource
-		nGetLastError,                 // message id
-		MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),    // languageid
-		lpMessage,              // output buffer
-		sizeof(lpMessage),     // size of msgbuf, bytes
-		NULL);
-
-	wstring str(lpMessage);
-	return str;
-}
-#else
-sstring GetLastErrorMessageString(int nGetLastError)
-{
-	DWORD dwSize = 0;
-	TCHAR lpMessage[0xFF];
-
-	dwSize = FormatMessage(FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,   // flags
-		NULL,                // lpsource
-		nGetLastError,                 // message id
-		MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),    // languageid
-		lpMessage,              // output buffer
-		sizeof(lpMessage),     // size of msgbuf, bytes
-		NULL);
-
-	sstring str(lpMessage);
-	return str;
-}
+#ifdef _MSC_VER
+// The following two structures need to be packed tightly, but unlike
+// Borland C++, Microsoft C++ does not do this by default.
+#pragma pack(1)
 #endif
 
+// The IP header
+struct IPHeader {
+	BYTE h_len : 4;           // Length of the header in dwords
+	BYTE version : 4;         // Version of IP
+	BYTE tos;               // Type of service
+	USHORT total_len;       // Length of the packet in dwords
+	USHORT ident;           // unique identifier
+	USHORT flags;           // Flags
+	BYTE ttl;               // Time to live
+	BYTE proto;             // Protocol number (TCP, UDP etc)
+	USHORT checksum;        // IP checksum
+	ULONG source_ip;
+	ULONG dest_ip;
+};
 
+// ICMP header
+struct ICMPHeader {
+	BYTE type;          // ICMP packet type
+	BYTE code;          // Type sub code
+	USHORT checksum;
+	USHORT id;
+	USHORT seq;
+	ULONG timestamp;    // not part of ICMP, but we need it
+};
+#define DEFAULT_PACKET_SIZE 32
+#define DEFAULT_TTL 30
+#define MAX_PING_DATA_SIZE 1024
+#define MAX_PING_PACKET_SIZE (MAX_PING_DATA_SIZE + sizeof(IPHeader))
+#define ICMP_ECHO_REPLY 0
+#define ICMP_DEST_UNREACH 3
+#define ICMP_TTL_EXPIRE 11
+#define ICMP_ECHO_REQUEST 8
 
-mutex mt;
-void CallBackFindOpenPort(char* ipAddress, int nPort, bool isOpen, int nGetLastError)
+int allocate_buffers(ICMPHeader*& send_buf, IPHeader*& recv_buf,
+	int packet_size)
 {
-	mt.lock();
-	if(isOpen)
-		wcout << convert_to_wstring(ipAddress) << " port:" << nPort << " is " << isOpen << endl;
-	else
-		wcout << convert_to_wstring(ipAddress) << L" port:" << nPort << L" "<< GetLastErrorMessageString(nGetLastError);
+	// First the send buffer
+	send_buf = (ICMPHeader*)new char[packet_size];
+	if (send_buf == 0) {
+		cerr << "Failed to allocate output buffer." << endl;
+		return -1;
+	}
 
-	mt.unlock();
+	// And then the receive buffer
+	recv_buf = (IPHeader*)new char[MAX_PING_PACKET_SIZE];
+	if (recv_buf == 0) {
+		cerr << "Failed to allocate output buffer." << endl;
+		return -1;
+	}
+
+	return 0;
 }
+USHORT ip_checksum(USHORT* buffer, int size)
+{
+	unsigned long cksum = 0;
+
+	// Sum all the words together, adding the final byte if size is odd
+	while (size > 1) {
+		cksum += *buffer++;
+		size -= sizeof(USHORT);
+	}
+	if (size) {
+		cksum += *(UCHAR*)buffer;
+	}
+
+	// Do a little shuffling
+	cksum = (cksum >> 16) + (cksum & 0xffff);
+	cksum += (cksum >> 16);
+
+	// Return the bitwise complement of the resulting mishmash
+	return (USHORT)(~cksum);
+}
+
+
+void init_ping_packet(ICMPHeader* icmp_hdr, int packet_size, int seq_no)
+{
+	// Set up the packet's fields
+	icmp_hdr->type = ICMP_ECHO_REQUEST;
+	icmp_hdr->code = 0;
+	icmp_hdr->checksum = 0;
+	icmp_hdr->id = (USHORT)GetCurrentProcessId();
+	icmp_hdr->seq = seq_no;
+	icmp_hdr->timestamp = GetTickCount();
+
+	// "You're dead meat now, packet!"
+	const unsigned long int deadmeat = 0xDEADBEEF;
+	char* datapart = (char*)icmp_hdr + sizeof(ICMPHeader);
+	int bytes_left = packet_size - sizeof(ICMPHeader);
+	while (bytes_left > 0) {
+		memcpy(datapart, &deadmeat, min(int(sizeof(deadmeat)),
+			bytes_left));
+		bytes_left -= sizeof(deadmeat);
+		datapart += sizeof(deadmeat);
+	}
+
+	// Calculate a checksum on the result
+	icmp_hdr->checksum = ip_checksum((USHORT*)icmp_hdr, packet_size);
+}
+
 int main()
 {
+	string m_ipAddress = "192.168.0.104";
 
-	dll_handle = LoadLibrary(L"EnzTCP.dll");
-	if (dll_handle)
-	{
-
-		pfnPtrEnumOpenPorts = (LPEnumOpenPorts)GetProcAddress(dll_handle, "EnumOpenPorts");
-		pfnPtrCleanEnumOpenPorts = (LPCleanEnumOpenPorts)GetProcAddress(dll_handle, "CleanEnumOpenPorts");
+	WSADATA wsaData;
+	int iResult;
+	SOCKET ConnectSocket = INVALID_SOCKET;
+	// Initialize Winsock
+	iResult = WSAStartup(MAKEWORD(2, 2), &wsaData);
+	if (iResult != 0) {
+		return false;
 	}
-	HANDLE h = pfnPtrEnumOpenPorts("192.168.0.1", 5000, CallBackFindOpenPort);
-	
-	_getch();
 
-	pfnPtrCleanEnumOpenPorts(h);
+	int packet_size = DEFAULT_PACKET_SIZE;
+	int ttl = DEFAULT_TTL;
+
+	ConnectSocket = socket(AF_INET, SOCK_RAW, IPPROTO_ICMP);
+	//ConnectSocket = WSASocket(AF_UNSPEC, SOCK_RAW, IPPROTO_ICMP, 0, 0, 0);
+	//if (SOCKET_ERROR == setsockopt(ConnectSocket, IPPROTO_IP, IP_TTL, (const char*)&ttl, sizeof(ttl)))
+	//	return 0;
+
+	struct addrinfo* result = NULL, * ptr = NULL, hints;
+	
+	ZeroMemory(&hints, sizeof(hints));
+	hints.ai_family = AF_INET;
+	hints.ai_socktype = SOCK_RAW;
+	hints.ai_protocol = IPPROTO_ICMP;
+	hints.ai_flags = AI_RETURN_TTL;
+
+	iResult = getaddrinfo(m_ipAddress.c_str(), NULL, &hints, &result);
+	char host[512];
+	memset(host, 0, sizeof(host));
+	int status = getnameinfo(result->ai_addr, (socklen_t)result->ai_addrlen, host, 512, 0, 0, 0);
+
+	ICMPHeader* send_buf = 0;
+	IPHeader* recv_buf = 0;
+
+	
+	packet_size = max(sizeof(ICMPHeader),
+		min(MAX_PING_DATA_SIZE, (unsigned int)packet_size));
+	
+	allocate_buffers(send_buf, recv_buf, packet_size);
+
+	init_ping_packet(send_buf, packet_size, 0);
+	int bwrote = sendto(ConnectSocket, (char*)send_buf, packet_size, 0, result->ai_addr, result->ai_addrlen);
+
+	int fromlen = result->ai_addrlen;
+	int bread = recvfrom(ConnectSocket, (char*)recv_buf,
+		packet_size + sizeof(IPHeader), 0,
+		(sockaddr*)&result->ai_addr, &fromlen);
+	if (bread == SOCKET_ERROR) {
+		cerr << "read failed: ";
+		if (WSAGetLastError() == WSAEMSGSIZE) {
+			cerr << "buffer too small" << endl;
+		}
+		else {
+			cerr << "error #" << WSAGetLastError() << endl;
+		}
+		return -1;
+	}
+
+	cout << bwrote;
+	freeaddrinfo(result);
+	closesocket(ConnectSocket);
+	WSACleanup();
+	// Resolve the server address and port
+
+
 	return 0;
 }
 
