@@ -80,11 +80,12 @@ void ThreadMultiFunc(LPVOID pParam)
 
 void CCheckOpenPorts::StartSearchingOpenPorts()
 {
-	for (int i = 0; i < m_nNumPorts; i++)
+	for (int i = 1; i < m_nNumPorts; i++)
 	{
 		THREADMON_t *ptmon= new THREADMON_t;
 		ptmon->sPort = to_string(i);
 		m_mapThreads[new thread(ThreadMultiFunc, ptmon)] = i;
+		m_pfnFindOpenPort(NULL, 0, 0, 0);
 	}
 	m_tMonitor = new thread(ThreadMonitorThreads, &m_mapThreads);
 	m_tMonitor->detach();
