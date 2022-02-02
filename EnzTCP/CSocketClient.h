@@ -11,5 +11,6 @@ public:
 	~CSocketClient();
 
 	bool ConnectToServer(string ipServer, string, int *pLastError);
+	bool ConnectToServer(string ipServer, string sPort);
 };
 

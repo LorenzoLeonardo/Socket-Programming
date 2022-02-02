@@ -72,3 +72,4 @@ bool CSocketClient::ConnectToServer(string ipServer, string sPort, int *pLastErr
 	WSACleanup();
 	return true;
 }
+

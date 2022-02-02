@@ -2,6 +2,9 @@
 #include "EnzTCP.h"
 #include "CTCPListener.h"
 #include "CCheckOpenPorts.h"
+#include "CSocketClient.h"
+
+CCheckOpenPorts* g_pOpenPorts = NULL;
 
 BOOL APIENTRY DllMain(HMODULE hModule,
     DWORD  ul_reason_for_call,
@@ -11,9 +14,12 @@ BOOL APIENTRY DllMain(HMODULE hModule,
     switch (ul_reason_for_call)
     {
     case DLL_PROCESS_ATTACH:
-    case DLL_THREAD_ATTACH:
-    case DLL_THREAD_DETACH:
     case DLL_PROCESS_DETACH:
+        if(g_pOpenPorts != NULL)
+        {
+            delete g_pOpenPorts;
+            g_pOpenPorts = NULL;
+        }
         break;
     }
     return TRUE;
@@ -49,21 +55,26 @@ void ENZTCPLIBRARY_API CloseServer(HANDLE hHandle)
     }
 }
 
-HANDLE ENZTCPLIBRARY_API EnumOpenPorts(char* ipAddress, int nNumPorts, FuncFindOpenPort pfnPtr)
+void ENZTCPLIBRARY_API EnumOpenPorts(char* ipAddress, int nNumPorts, FuncFindOpenPort pfnPtr)
 {
+    if(g_pOpenPorts != NULL)
+    {
+        delete g_pOpenPorts;
+        g_pOpenPorts = NULL;
+    }
     string sAddress(ipAddress);
 
-    CCheckOpenPorts* pOpenPorts = new CCheckOpenPorts(sAddress, nNumPorts, pfnPtr);
-    pOpenPorts->StartSearchingOpenPorts();
-    return (HANDLE)pOpenPorts;
+    g_pOpenPorts = new CCheckOpenPorts(sAddress, nNumPorts, pfnPtr);
+    g_pOpenPorts->StartSearchingOpenPorts();
+    return;
 }
-void ENZTCPLIBRARY_API CleanEnumOpenPorts(HANDLE hHandle)
+
+
+bool ENZTCPLIBRARY_API IsPortOpen(char* ipAddress, int nNumPorts, int *pnlastError)
 {
-    if (hHandle)
-    {
-        CCheckOpenPorts* pOpenPorts = ((CCheckOpenPorts*)(hHandle));
-        delete pOpenPorts;
-        pOpenPorts = NULL;
-    }
+   string sAddress(ipAddress);
+
+   CSocketClient port;
+    return port.ConnectToServer(sAddress, to_string(nNumPorts), pnlastError);
 }
 

@@ -15,19 +15,22 @@ class CCheckOpenPorts
 public :
 	CCheckOpenPorts();
 	CCheckOpenPorts(string ipTargetIPAddress, int nNumberOfPorts, FuncFindOpenPort pfnPtr);
+	CCheckOpenPorts(string ipTargetIPAddress, int nPort);
+
 	~CCheckOpenPorts();
 	FuncFindOpenPort m_pfnFindOpenPort;
 	void StartSearchingOpenPorts();
 	string GetIPAddress();
-	map<thread*, int> GetThreads();
+	map<thread*, int> *GetThreads();
 	thread* GetThreadMonitoring();
 	bool IsPortOpen(string ipAddress, string port, int* pLastError);
+	int GetNumPorts();
+
 private:
 	string m_ipAddressTarget;
 	int m_nNumPorts;
 	map<thread*, int> m_mapThreads;
 	thread* m_tMonitor;
-
-	
+	int m_nPort;
 };
 
