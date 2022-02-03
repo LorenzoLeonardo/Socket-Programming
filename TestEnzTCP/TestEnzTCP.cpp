@@ -182,7 +182,7 @@ bool Test()
 	// Resolve the server address and port
 }
 
-typedef void (* FNStartLocalAreaListening)(const char* ipAddress, CallbackLocalAreaListener fnpPtr);
+typedef void (* FNStartLocalAreaListening)(const char* ipAddress, CallbackLocalAreaListener fnpPtr, int);
 typedef void (*FNStopLocalAreaListening)();
 
 FNStartLocalAreaListening pfnPtrStartLocalAreaListening;
@@ -475,7 +475,7 @@ int main()
 		pfnPtrStartLocalAreaListening = (FNStartLocalAreaListening)GetProcAddress(dll_handle, "StartLocalAreaListening");
 		pfnPtrStopLocalAreaListening = (FNStopLocalAreaListening)GetProcAddress(dll_handle, "StopLocalAreaListening");
 	}
-	pfnPtrStartLocalAreaListening("192.168.0.1", CallbackLocalArea);
+	pfnPtrStartLocalAreaListening("192.168.0.1", CallbackLocalArea, 5000);
 	_getch();
 
 	pfnPtrStopLocalAreaListening();

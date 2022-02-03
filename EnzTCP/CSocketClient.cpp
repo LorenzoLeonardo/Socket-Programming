@@ -2,20 +2,25 @@
 #include "CSocketClient.h"
 #include <mutex>
 #include <iostream>
-CRITICAL_SECTION CriticalSection;
+
 CSocketClient::CSocketClient()
 {
 	memset(achIOBuf, 0, sizeof(achIOBuf));
+	lpIcmpHdr = NULL;
+	lpIpHdr = NULL;
+
+
 }
 CSocketClient::CSocketClient(string ipServer)
 {
 	m_ipAddress = ipServer;
-	InitializeCriticalSection(&CriticalSection);
-
+	memset(achIOBuf, 0, sizeof(achIOBuf));
+	lpIcmpHdr = NULL;
+	lpIpHdr = NULL;
 }
 CSocketClient::~CSocketClient()
 {
-	DeleteCriticalSection(&CriticalSection);
+
 }
 bool CSocketClient::CheckDevice(string ipAddress, string &hostname)
 {
@@ -24,12 +29,14 @@ bool CSocketClient::CheckDevice(string ipAddress, string &hostname)
 	SOCKET socket = INVALID_SOCKET;
 	bool bRet = false;
 
+	memset(achIOBuf, 0, sizeof(achIOBuf));
+
+
 	// Initialize Winsock
 	iResult = WSAStartup(MAKEWORD(2, 2), &wsaData);
 	if (iResult != 0) {
 		return false;
 	}
-	memset(achIOBuf, 0, sizeof(achIOBuf));
 
 	socket = icmp_open();
 
@@ -48,7 +55,7 @@ bool CSocketClient::CheckDevice(string ipAddress, string &hostname)
 	int status = getnameinfo(result->ai_addr, (socklen_t)result->ai_addrlen, host, 512, 0, 0, 0);
 	hostname = host;
 
-	if (icmp_sendto(socket, NULL, (LPSOCKADDR_IN)result->ai_addr, 0, 0, result->ai_addrlen) != SOCKET_ERROR)
+	if (icmp_sendto(socket, NULL, (LPSOCKADDR_IN)result->ai_addr, 0, 0, (int)result->ai_addrlen) != SOCKET_ERROR)
 	{
 		int id, seq;
 
@@ -60,12 +67,9 @@ bool CSocketClient::CheckDevice(string ipAddress, string &hostname)
 			bRet = false;
 	}
 	else
-	{
 		bRet = false;
-	}
 
 	freeaddrinfo(result);
-
 	closesocket(socket);
 	WSACleanup();
 	return bRet;
@@ -114,7 +118,7 @@ bool CSocketClient::ConnectToServer(string ipServer, string sPort, int *pLastErr
 		return false;
 	}
 
-	iResult = connect(ConnectSocket, ptr->ai_addr, (int)ptr->ai_addrlen);
+	iResult = connect(ConnectSocket, ptr->ai_addr, ptr->ai_addrlen);
 	if (iResult == SOCKET_ERROR) {
 		*pLastError = WSAGetLastError();
 
@@ -129,98 +133,6 @@ bool CSocketClient::ConnectToServer(string ipServer, string sPort, int *pLastErr
 	closesocket(ConnectSocket);
 	WSACleanup();
 	return true;
-}
-
-int CSocketClient::decode_reply(IPHeader* reply, int bytes)
-{
-	// Skip ahead to the ICMP header within the IP packet
-	unsigned short header_len = reply->h_len * 4;
-	ICMPHeader* icmphdr = (ICMPHeader*)((char*)reply + header_len);
-
-	// Make sure the reply is sane
-	if (bytes < header_len + ICMP_MIN) 
-	{
-		return -1;
-	}
-	else if (icmphdr->type != ICMP_ECHO_REPLY) 
-	{
-		if (icmphdr->type != ICMP_TTL_EXPIRE) 
-		{
-			return -1;
-		}
-	}
-	else if (icmphdr->id != (USHORT)GetCurrentProcessId()) 
-	{
-		return -2;
-	}
-	return 0;
-}
-int CSocketClient::allocate_buffers(ICMPHeader*& send_buf, IPHeader*& recv_buf, int packet_size)
-{
-	// First the send buffer
-	send_buf = (ICMPHeader*)new char[packet_size ];
-	memset(send_buf, 0, packet_size);
-	if (send_buf == 0) {
-		//cerr << "Failed to allocate output buffer." << endl;
-		return -1;
-	}
-
-	// And then the receive buffer
-	recv_buf = (IPHeader*)new char[MAX_PING_PACKET_SIZE];
-	memset(recv_buf, 0, MAX_PING_PACKET_SIZE);
-	if (recv_buf == 0) {
-		//cerr << "Failed to allocate output buffer." << endl;
-		return -1;
-	}
-
-	return 0;
-}
-
-USHORT CSocketClient::ip_checksum(USHORT* buffer, int size)
-{
-	unsigned long cksum = 0;
-
-	// Sum all the words together, adding the final byte if size is odd
-	while (size > 1) {
-		cksum += *buffer++;
-		size -= sizeof(USHORT);
-	}
-	if (size) {
-		cksum += *(UCHAR*)buffer;
-	}
-
-	// Do a little shuffling
-	cksum = (cksum >> 16) + (cksum & 0xffff);
-	cksum += (cksum >> 16);
-
-	// Return the bitwise complement of the resulting mishmash
-	return (USHORT)(~cksum);
-}
-
-
-void CSocketClient::init_ping_packet(ICMPHeader* icmp_hdr, int packet_size, int seq_no)
-{
-	// Set up the packet's fields
-	icmp_hdr->type = ICMP_ECHO_REQUEST;
-	icmp_hdr->code = 0;
-	icmp_hdr->checksum = 0;
-	icmp_hdr->id = (USHORT)GetCurrentProcessId();
-	icmp_hdr->seq = seq_no;
-	icmp_hdr->timestamp = GetTickCount();
-
-	// "You're dead meat now, packet!"
-	const unsigned long int deadmeat = 0xDEADBEEF;
-	char* datapart = (char*)icmp_hdr + sizeof(ICMPHeader);
-	int bytes_left = packet_size - sizeof(ICMPHeader);
-	while (bytes_left > 0) {
-		memcpy(datapart, &deadmeat, min(int(sizeof(deadmeat)),
-			bytes_left));
-		bytes_left -= sizeof(deadmeat);
-		datapart += sizeof(deadmeat);
-	}
-
-	// Calculate a checksum on the result
-	icmp_hdr->checksum = ip_checksum((USHORT*)icmp_hdr, packet_size);
 }
 
 /*

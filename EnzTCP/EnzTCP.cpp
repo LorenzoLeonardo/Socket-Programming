@@ -85,14 +85,14 @@ bool ENZTCPLIBRARY_API IsPortOpen(char* ipAddress, int nNumPorts, int *pnlastErr
     return port.ConnectToServer(sAddress, to_string(nNumPorts), pnlastError);
 }
 
-void ENZTCPLIBRARY_API StartLocalAreaListening(const char* ipAddress, CallbackLocalAreaListener fnpPtr)
+void ENZTCPLIBRARY_API StartLocalAreaListening(const char* ipAddress, CallbackLocalAreaListener fnpPtr, int nPollingTimeMS)
 {
     if (g_pLocalAreaListener != NULL)
     {
         delete g_pLocalAreaListener;
         g_pLocalAreaListener = NULL;
     }
-    g_pLocalAreaListener = new CLocalAreaListener(ipAddress, fnpPtr);
+    g_pLocalAreaListener = new CLocalAreaListener(ipAddress, fnpPtr, nPollingTimeMS);
     g_pLocalAreaListener->Start();
 }
 void ENZTCPLIBRARY_API StopLocalAreaListening()
