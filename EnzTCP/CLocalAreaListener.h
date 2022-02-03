@@ -5,8 +5,9 @@
 #include <string>
 #include <ws2tcpip.h>
 #include <iphlpapi.h>
-
+#include <mutex>
 using namespace std;
+
 
 
 typedef void (*CallbackLocalAreaListener)(const char* ipAddress, const char* hostName, bool bIsConnected);

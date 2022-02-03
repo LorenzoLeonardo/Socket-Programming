@@ -1,6 +1,7 @@
 #include "pch.h"
 #include "CLocalAreaListener.h"
 #include "CSocketClient.h"
+mutex ntx;
 
 CLocalAreaListener* g_pCLocalAreaListener = NULL;
 
@@ -10,11 +11,12 @@ CLocalAreaListener::CLocalAreaListener(const char* szStartingIPAddress, Callback
 	m_szStartingIP = szStartingIPAddress;
 	m_threadMain = NULL;
 	m_bHasStarted = false;
+	
 }
 
 CLocalAreaListener::~CLocalAreaListener()
 {
-
+	
 }
 map<thread*, int>* CLocalAreaListener::GetThreads()
 {
@@ -25,14 +27,12 @@ void MultiQueryingThread(void* args)
 {
 	string* p = (string*)args;
 	string hostName;
+
 	if (g_pCLocalAreaListener->CheckIPDeviceConnected(*p, hostName))
-	{
 		g_pCLocalAreaListener->m_fnptrCallbackLocalAreaListener((const char*) (*p).c_str(), (const char*)hostName.c_str(), true);
-	}
-	else
-	{
-		g_pCLocalAreaListener->m_fnptrCallbackLocalAreaListener((const char*)(*p).c_str(), (const char*)hostName.c_str(), false);
-	}
+	//else
+//		g_pCLocalAreaListener->m_fnptrCallbackLocalAreaListener((const char*)(*p).c_str(), (const char*)hostName.c_str(), false);
+
 	delete p;
 }
 
@@ -44,6 +44,7 @@ void MainThread(void* args)
 	ipAddressStart = ipAddressStart.substr(0, ipAddressStart.rfind('.', ipAddressStart.size()) + 1);
 	while (pCLocalAreaListener->HasNotStopped())
 	{
+		
 		for (int i = 1; i <= 254; i++)
 		{
 			string* str = new string;
@@ -64,7 +65,8 @@ void MainThread(void* args)
 			it++;
 		}
 		pCLocalAreaListener->GetThreads()->clear();
-		Sleep(1000);
+		g_pCLocalAreaListener->m_fnptrCallbackLocalAreaListener(NULL, NULL, false);
+		Sleep(5000);
 	}
 	return;
 
@@ -92,6 +94,10 @@ void CLocalAreaListener::Stop()
 }
 bool CLocalAreaListener::CheckIPDeviceConnected(string ipAddress,string &hostName)
 {
-	CSocketClient clientSock(ipAddress);
-	return clientSock.CheckDevice(ipAddress, hostName);
+	//EnterCriticalSection(&CriticalSection);
+	CSocketClient* clientSock = new CSocketClient(ipAddress);
+	bool bRet = clientSock->CheckDevice(ipAddress, hostName);
+	delete clientSock;
+
+	return bRet;
 }

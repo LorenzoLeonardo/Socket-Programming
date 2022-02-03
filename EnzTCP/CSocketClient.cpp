@@ -1,42 +1,37 @@
 #include "pch.h"
 #include "CSocketClient.h"
 #include <mutex>
-
-mutex mtx;
+#include <iostream>
+CRITICAL_SECTION CriticalSection;
 CSocketClient::CSocketClient()
 {
+	memset(achIOBuf, 0, sizeof(achIOBuf));
 }
 CSocketClient::CSocketClient(string ipServer)
 {
 	m_ipAddress = ipServer;
-	
+	InitializeCriticalSection(&CriticalSection);
+
 }
 CSocketClient::~CSocketClient()
 {
+	DeleteCriticalSection(&CriticalSection);
 }
 bool CSocketClient::CheckDevice(string ipAddress, string &hostname)
 {
 	WSADATA wsaData;
 	int iResult;
-	SOCKET ConnectSocket = INVALID_SOCKET;
+	SOCKET socket = INVALID_SOCKET;
+	bool bRet = false;
+
 	// Initialize Winsock
 	iResult = WSAStartup(MAKEWORD(2, 2), &wsaData);
 	if (iResult != 0) {
-		mtx.unlock();
 		return false;
 	}
+	memset(achIOBuf, 0, sizeof(achIOBuf));
 
-	int packet_size = DEFAULT_PACKET_SIZE;
-	int ttl = DEFAULT_TTL;
-
-	ConnectSocket = socket(AF_INET, SOCK_RAW, IPPROTO_ICMP);
-	if (ConnectSocket == INVALID_SOCKET)
-	{
-		closesocket(ConnectSocket);
-		WSACleanup();
-		mtx.unlock();
-		return false;
-	}
+	socket = icmp_open();
 
 	struct addrinfo* result = NULL, * ptr = NULL, hints;
 
@@ -44,63 +39,36 @@ bool CSocketClient::CheckDevice(string ipAddress, string &hostname)
 	hints.ai_family = AF_INET;
 	hints.ai_socktype = SOCK_RAW;
 	hints.ai_protocol = IPPROTO_ICMP;
-	hints.ai_flags = AI_RETURN_TTL;
+	hints.ai_flags = AI_PASSIVE;
 
 	iResult = getaddrinfo(ipAddress.c_str(), NULL, &hints, &result);
-	if (iResult != 0) {
-		WSACleanup();
-		return false;
-	}
 
 	char host[512];
 	memset(host, 0, sizeof(host));
 	int status = getnameinfo(result->ai_addr, (socklen_t)result->ai_addrlen, host, 512, 0, 0, 0);
 	hostname = host;
-	ICMPHeader* send_buf = 0;
-	IPHeader* recv_buf = 0;
 
-
-	packet_size = max(sizeof(ICMPHeader),
-		min(MAX_PING_DATA_SIZE, (unsigned int)packet_size));
-
-	allocate_buffers(send_buf, recv_buf, packet_size);
-
-	init_ping_packet(send_buf, packet_size, 0);
-	int bwrote = sendto(ConnectSocket, (char*)send_buf, packet_size, 0, result->ai_addr,(int) result->ai_addrlen);
-	if (bwrote == SOCKET_ERROR)
+	if (icmp_sendto(socket, NULL, (LPSOCKADDR_IN)result->ai_addr, 0, 0, result->ai_addrlen) != SOCKET_ERROR)
 	{
-		delete[]	send_buf;
-		delete[] 	recv_buf;
+		int id, seq;
 
-		//freeaddrinfo(result);
-		closesocket(ConnectSocket);
-		WSACleanup();
+		icmp_recvfrom(socket, &id, &seq, (LPSOCKADDR_IN)result->ai_addr);
 
-		return false;
+		if (lpIcmpHdr->icmp_data[0] != NULL)
+			bRet = true;
+		else
+			bRet = false;
+	}
+	else
+	{
+		bRet = false;
 	}
 
-	int fromlen = (int)result->ai_addrlen;
-	int bread = recvfrom(ConnectSocket, (char*)recv_buf,
-		packet_size + sizeof(IPHeader), 0,
-		(sockaddr*)&result->ai_addr, &fromlen);
-	if (bread == SOCKET_ERROR)
-	{
-		delete[]	send_buf;
-		delete[] 	recv_buf;
+	freeaddrinfo(result);
 
-		closesocket(ConnectSocket);
-		WSACleanup();
-
-		return false;
-	}
-	delete[]	send_buf;
-	delete[] 	recv_buf;
-
-	
-	closesocket(ConnectSocket);
+	closesocket(socket);
 	WSACleanup();
-
-	return true;
+	return bRet;
 }
 bool CSocketClient::ConnectToServer(string ipServer, string sPort, int *pLastError)
 {
@@ -163,18 +131,43 @@ bool CSocketClient::ConnectToServer(string ipServer, string sPort, int *pLastErr
 	return true;
 }
 
+int CSocketClient::decode_reply(IPHeader* reply, int bytes)
+{
+	// Skip ahead to the ICMP header within the IP packet
+	unsigned short header_len = reply->h_len * 4;
+	ICMPHeader* icmphdr = (ICMPHeader*)((char*)reply + header_len);
 
+	// Make sure the reply is sane
+	if (bytes < header_len + ICMP_MIN) 
+	{
+		return -1;
+	}
+	else if (icmphdr->type != ICMP_ECHO_REPLY) 
+	{
+		if (icmphdr->type != ICMP_TTL_EXPIRE) 
+		{
+			return -1;
+		}
+	}
+	else if (icmphdr->id != (USHORT)GetCurrentProcessId()) 
+	{
+		return -2;
+	}
+	return 0;
+}
 int CSocketClient::allocate_buffers(ICMPHeader*& send_buf, IPHeader*& recv_buf, int packet_size)
 {
 	// First the send buffer
-	send_buf = (ICMPHeader*)new char[packet_size + 1];
+	send_buf = (ICMPHeader*)new char[packet_size ];
+	memset(send_buf, 0, packet_size);
 	if (send_buf == 0) {
 		//cerr << "Failed to allocate output buffer." << endl;
 		return -1;
 	}
 
 	// And then the receive buffer
-	recv_buf = (IPHeader*)new char[MAX_PING_PACKET_SIZE + 1];
+	recv_buf = (IPHeader*)new char[MAX_PING_PACKET_SIZE];
+	memset(recv_buf, 0, MAX_PING_PACKET_SIZE);
 	if (recv_buf == 0) {
 		//cerr << "Failed to allocate output buffer." << endl;
 		return -1;
@@ -228,4 +221,174 @@ void CSocketClient::init_ping_packet(ICMPHeader* icmp_hdr, int packet_size, int 
 
 	// Calculate a checksum on the result
 	icmp_hdr->checksum = ip_checksum((USHORT*)icmp_hdr, packet_size);
+}
+
+/*
+ * Function icmp_open()
+ *
+ * Description: opens an ICMP "raw" socket.
+ */
+SOCKET CSocketClient::icmp_open(void) 
+{
+	SOCKET s;
+	s = socket(AF_INET, SOCK_RAW, IPPROTO_ICMP);
+	if (s == SOCKET_ERROR) 
+	{
+		//WSAErrMsg((LPSTR)"socket(type=SOCK_RAW, protocol=IPROTO_ICMP)");
+		return (INVALID_SOCKET);
+	}
+	return (s);
+} /* end icmp_open() */
+/*
+ * Function: icmp_sendto()
+ *
+ * Description: Initializes an ICMP header, inserts the current
+ * time in the ICMP data and initializes the data, then sends
+ * the ICMP Echo Request to destination address.
+ */
+int CSocketClient::icmp_sendto(SOCKET s,
+	HWND hwnd,
+	LPSOCKADDR_IN lpstToAddr,
+	int nIcmpId,
+	int nIcmpSeq,
+	int nEchoDataLen) 
+
+{
+	int nAddrLen = sizeof(SOCKADDR_IN);
+	int nRet;
+	u_short i;
+	char c;
+	/*--------------------- init ICMP header -----------------------*/
+
+	lpIcmpHdr = (ICMP_HDR FAR*)achIOBuf;
+	lpIcmpHdr->icmp_type = ICMP_ECHOREQ;
+	lpIcmpHdr->icmp_code = 0;
+	lpIcmpHdr->icmp_cksum = 0;
+	lpIcmpHdr->icmp_id = nIcmpId++;
+	lpIcmpHdr->icmp_seq = nIcmpSeq++;
+
+	/*--------------------put data into packet------------------------
+	 * insert the current time, so we can calculate round-trip time
+	 * upon receipt of echo reply (which will echo data we sent)
+	 */
+	lCurrentTime = GetCurrentTime();
+	memcpy(&(achIOBuf[ICMP_HDR_LEN]), &lCurrentTime, sizeof(long));
+
+	/* data length includes the time (but not icmp header) */
+	c = ' ';   /* first char: space, right after the time */
+
+	for (i = ICMP_HDR_LEN + sizeof(long);
+		((i < (nEchoDataLen + ICMP_HDR_LEN)) && (i < PNGBUFSIZE)); i++) {
+		achIOBuf[i] = c;
+		c++;
+		if (c > '~') /* go up to ASCII 126, then back to 32 */
+			c = ' ';
+	}
+
+	/*----------------------assign ICMP checksum ----------------------
+	 * ICMP checksum includes ICMP header and data, and assumes current
+	 * checksum value of zero in header
+	 */
+	lpIcmpHdr->icmp_cksum =
+		cksum((u_short FAR*)lpIcmpHdr, nEchoDataLen + ICMP_HDR_LEN);
+
+	/*--------------------- send ICMP echo request -------------------*/
+	nRet = sendto(s,                              /* socket */
+		(LPSTR)lpIcmpHdr,                      /* buffer */
+		nEchoDataLen + ICMP_HDR_LEN + sizeof(long),/* length */
+		0,                                     /* flags */
+		(LPSOCKADDR)lpstToAddr,                /* destination */
+		sizeof(SOCKADDR_IN));                  /* address length */
+	if (nRet == SOCKET_ERROR) {
+		return nRet;
+	}
+	return (nRet);
+} /* end icmp_sendto() */
+
+/*
+ * Function: icmp_recvfrom()
+ *
+ * Description:
+ * receive icmp echo reply, parse the reply packet to remove the
+ * send time from the ICMP data.
+ */
+
+u_long CSocketClient::icmp_recvfrom(SOCKET s, LPINT lpnIcmpId, LPINT lpnIcmpSeq, LPSOCKADDR_IN lpstFromAddr) 
+{
+	u_long lSendTime;
+	int nAddrLen = sizeof(struct sockaddr_in);
+	int nRet, i;
+	/*-------------------- receive ICMP echo reply ------------------*/
+
+	stFromAddr.sin_family = AF_INET;
+	stFromAddr.sin_addr.s_addr = INADDR_ANY; /*not used on input anyway*/
+	stFromAddr.sin_port = 0; /* port not used in ICMP */
+
+	nRet = recvfrom(s,                                 /* socket */
+		(LPSTR)achIOBuf,                                 /* buffer */
+		PNGBUFSIZE + ICMP_HDR_LEN + sizeof(long) + IP_HDR_LEN, /* length */
+		0,                                               /* flags  */
+		(LPSOCKADDR)lpstFromAddr,                        /* source */
+		&nAddrLen);                                      /* addrlen*/
+	if (nRet == SOCKET_ERROR) {
+		//	WSAErrMsg((LPSTR)"recvfrom()");
+	}
+
+	/*------------------------- parse data ---------------------------
+	 * remove the time from data for return.
+	 * NOTE: the data received and sent may be asymmetric, as they
+	 * are in Berkeley Sockets. As a reusult, we may receive
+	 * the IP header, although we didn't send it. This subtlety is
+	 * not often implemented so we do a quick check of the data
+	 * received to see if it includes the IP header (we look for 0x45
+	 * value in first byte of buffer to check if IP header present).
+	 */
+
+	 /* figure out the offset to data */
+	if (achIOBuf[0] == 0x45) { /* IP header present? */
+		i = IP_HDR_LEN + ICMP_HDR_LEN;
+		lpIcmpHdr = (LPICMPHDR) & (achIOBuf[IP_HDR_LEN]);
+	}
+	else {
+		i = ICMP_HDR_LEN;
+		lpIcmpHdr = (LPICMPHDR)achIOBuf;
+	}
+
+	/* pull out the ICMP ID and Sequence numbers */
+	*lpnIcmpId = lpIcmpHdr->icmp_id;
+	*lpnIcmpSeq = lpIcmpHdr->icmp_seq;
+
+	/* remove the send time from the ICMP data */
+	memcpy(&lSendTime, (&achIOBuf[i]), sizeof(u_long));
+
+	return (lSendTime);
+} /* end icmp_recvfrom() */
+
+/*
+ * Function: cksum()
+ *
+ * Description:
+ * Calculate Internet checksum for data buffer and length (one's
+ * complement sum of 16-bit words). Used in IP, ICMP, UDP, IGMP.
+ */
+u_short CSocketClient::cksum(u_short FAR* lpBuf, int nLen) 
+{
+	register long lSum = 0L; /* work variables */
+
+	/* note: to handle odd number of bytes, last (even) byte in
+	 * buffer have a value of 0 (we assume that it does)
+	 */
+	while (nLen > 0) {
+		lSum += *(lpBuf++); /* add word value to sum */
+		nLen -= 2; /* decrement byte count by 2 */
+	}
+
+	/* put 32-bit sum into 16-bits */
+	lSum = (lSum & 0xffff) + (lSum >> 16);
+	lSum += (lSum >> 16);
+
+	/* return Internet checksum. Note:integral type
+	 * conversion warning is expected here. It's ok.
+	 */
+	return (~lSum);
 }
