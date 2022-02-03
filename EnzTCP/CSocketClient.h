@@ -7,6 +7,9 @@ using namespace std;
 /* ICMP types */
 #define ICMP_ECHOREPLY 0 /* ICMP type: echo reply */
 #define ICMP_ECHOREQ 8   /* ICMP type: echo request */
+#define ICMP_DEST_UNREACH 3
+#define ICMP_TTL_EXPIRE 11
+
 
 /* definition of ICMP header as per RFC 792 */
 typedef struct icmp_hdr 
@@ -22,6 +25,7 @@ typedef struct icmp_hdr
 
 /* definition of IP header version 4 as per RFC 791 */
 #define IPVERSION 4 
+
 typedef struct ip_hdr 
 {
 	u_char ip_hl;          /* header length */

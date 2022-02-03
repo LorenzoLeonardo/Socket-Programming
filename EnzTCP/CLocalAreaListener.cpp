@@ -1,6 +1,6 @@
 #include "pch.h"
 #include "CLocalAreaListener.h"
-#include "CSocketClient.h"
+#include "CICMP.h"
 
 
 CLocalAreaListener* g_pCLocalAreaListener = NULL;
@@ -46,7 +46,7 @@ void MainThread(void* args)
 	pCLocalAreaListener->SetMainThreadHasStarted(TRUE);
 	do
 	{
-		for (int i = 1; i < 0XFF; i++)
+		for (int i = nStart; i <= 254; i++)
 		{
 			string* str = new string;
 			*str = ipAddressStart + to_string(i);
@@ -100,9 +100,9 @@ void CLocalAreaListener::Stop()
 }
 bool CLocalAreaListener::CheckIPDeviceConnected(string ipAddress,string &hostName)
 {
-	CSocketClient* clientSock = new CSocketClient(ipAddress);
-	bool bRet = clientSock->CheckDevice(ipAddress, hostName);
-	delete clientSock;
+	CICMP* objICMP = new CICMP();
+	bool bRet = objICMP->CheckDevice(ipAddress, hostName);
+	delete objICMP;
 
 	return bRet;
 }

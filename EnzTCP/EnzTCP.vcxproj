@@ -152,6 +152,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="CCheckOpenPorts.h" />
+    <ClInclude Include="CICMP.h" />
     <ClInclude Include="CLocalAreaListener.h" />
     <ClInclude Include="CSocket.h" />
     <ClInclude Include="CSocketClient.h" />
@@ -163,6 +164,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="CCheckOpenPorts.cpp" />
+    <ClCompile Include="CICMP.cpp" />
     <ClCompile Include="CLocalAreaListener.cpp" />
     <ClCompile Include="CSocket.cpp" />
     <ClCompile Include="CSocketClient.cpp" />

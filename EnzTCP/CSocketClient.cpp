@@ -6,17 +6,11 @@
 CSocketClient::CSocketClient()
 {
 	memset(achIOBuf, 0, sizeof(achIOBuf));
-	lpIcmpHdr = NULL;
-	lpIpHdr = NULL;
-
-
 }
 CSocketClient::CSocketClient(string ipServer)
 {
 	m_ipAddress = ipServer;
 	memset(achIOBuf, 0, sizeof(achIOBuf));
-	lpIcmpHdr = NULL;
-	lpIpHdr = NULL;
 }
 CSocketClient::~CSocketClient()
 {
@@ -29,6 +23,8 @@ bool CSocketClient::CheckDevice(string ipAddress, string &hostname)
 	SOCKET socket = INVALID_SOCKET;
 	bool bRet = false;
 
+	int nStart = atoi(ipAddress.substr(ipAddress.rfind('.', ipAddress.size()) + 1, ipAddress.size()).c_str());
+	
 	memset(achIOBuf, 0, sizeof(achIOBuf));
 
 
@@ -55,14 +51,26 @@ bool CSocketClient::CheckDevice(string ipAddress, string &hostname)
 	int status = getnameinfo(result->ai_addr, (socklen_t)result->ai_addrlen, host, 512, 0, 0, 0);
 	hostname = host;
 
-	if (icmp_sendto(socket, NULL, (LPSOCKADDR_IN)result->ai_addr, 0, 0, (int)result->ai_addrlen) != SOCKET_ERROR)
+	if (icmp_sendto(socket, NULL, (LPSOCKADDR_IN)result->ai_addr, nStart, nStart, (int)result->ai_addrlen) != SOCKET_ERROR)
 	{
 		int id, seq;
 
-		icmp_recvfrom(socket, &id, &seq, (LPSOCKADDR_IN)result->ai_addr);
+		if (icmp_recvfrom(socket, &id, &seq, (LPSOCKADDR_IN)result->ai_addr) != SOCKET_ERROR)
+		{
+			if (lpIcmpHdr->icmp_type == 69 && lpIcmpHdr->icmp_code == 0)
+			{
+				bRet = false;
+			}
+			else
+			{
+				if (lpIcmpHdr->icmp_data[0] == 0)
+					bRet = false;
+				else
+					bRet = true;
+			}
+				
 
-		if (lpIcmpHdr->icmp_data[0] != NULL)
-			bRet = true;
+		}
 		else
 			bRet = false;
 	}
@@ -176,8 +184,8 @@ int CSocketClient::icmp_sendto(SOCKET s,
 	lpIcmpHdr->icmp_type = ICMP_ECHOREQ;
 	lpIcmpHdr->icmp_code = 0;
 	lpIcmpHdr->icmp_cksum = 0;
-	lpIcmpHdr->icmp_id = nIcmpId++;
-	lpIcmpHdr->icmp_seq = nIcmpSeq++;
+	lpIcmpHdr->icmp_id = (USHORT)nIcmpId;
+	lpIcmpHdr->icmp_seq = nIcmpSeq;
 
 	/*--------------------put data into packet------------------------
 	 * insert the current time, so we can calculate round-trip time
@@ -244,6 +252,7 @@ u_long CSocketClient::icmp_recvfrom(SOCKET s, LPINT lpnIcmpId, LPINT lpnIcmpSeq,
 		&nAddrLen);                                      /* addrlen*/
 	if (nRet == SOCKET_ERROR) {
 		//	WSAErrMsg((LPSTR)"recvfrom()");
+		return nRet;
 	}
 
 	/*------------------------- parse data ---------------------------
@@ -257,11 +266,13 @@ u_long CSocketClient::icmp_recvfrom(SOCKET s, LPINT lpnIcmpId, LPINT lpnIcmpSeq,
 	 */
 
 	 /* figure out the offset to data */
-	if (achIOBuf[0] == 0x45) { /* IP header present? */
+	if (achIOBuf[0] == 0x45) 
+	{ /* IP header present? */
 		i = IP_HDR_LEN + ICMP_HDR_LEN;
 		lpIcmpHdr = (LPICMPHDR) & (achIOBuf[IP_HDR_LEN]);
 	}
-	else {
+	else 
+	{
 		i = ICMP_HDR_LEN;
 		lpIcmpHdr = (LPICMPHDR)achIOBuf;
 	}
