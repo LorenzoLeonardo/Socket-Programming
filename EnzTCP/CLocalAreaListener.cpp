@@ -46,7 +46,8 @@ void MainThread(void* args)
 	pCLocalAreaListener->SetMainThreadHasStarted(TRUE);
 	do
 	{
-		for (int i = nStart; i <= 254; i++)
+		g_pCLocalAreaListener->m_fnptrCallbackLocalAreaListener("start", NULL, false);
+		for (int i = 1; i <= 254; i++)
 		{
 			string* str = new string;
 			*str = ipAddressStart + to_string(i);
@@ -66,12 +67,13 @@ void MainThread(void* args)
 			it++;
 		}
 		pCLocalAreaListener->GetThreads()->clear();
-		g_pCLocalAreaListener->m_fnptrCallbackLocalAreaListener(NULL, NULL, false);
+		g_pCLocalAreaListener->m_fnptrCallbackLocalAreaListener("end", NULL, false);
 		Sleep(nPollTime);
 	} while (pCLocalAreaListener->HasNotStopped());
 
+	
 	pCLocalAreaListener->SetMainThreadHasStarted(FALSE);
-
+	g_pCLocalAreaListener->m_fnptrCallbackLocalAreaListener("stop", NULL, false);
 	return;
 }
 string CLocalAreaListener::GetStartingIPAddress()
