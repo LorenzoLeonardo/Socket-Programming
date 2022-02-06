@@ -28,9 +28,10 @@ void MultiQueryingThread(void* args)
 {
 	string* p = (string*)args;
 	string hostName;
+	string macAddress;
 
-	if (g_pCLocalAreaListener->CheckIPDeviceConnected(*p, hostName))
-		g_pCLocalAreaListener->m_fnptrCallbackLocalAreaListener((const char*) (*p).c_str(), (const char*)hostName.c_str(), true);
+	if (g_pCLocalAreaListener->CheckIPDeviceConnected(*p, hostName, macAddress))
+		g_pCLocalAreaListener->m_fnptrCallbackLocalAreaListener((const char*) (*p).c_str(), (const char*)hostName.c_str(), (const char*)macAddress.c_str(), true);
 
 	delete p;
 }
@@ -46,7 +47,7 @@ void MainThread(void* args)
 	pCLocalAreaListener->SetMainThreadHasStarted(TRUE);
 	do
 	{
-		g_pCLocalAreaListener->m_fnptrCallbackLocalAreaListener("start", NULL, false);
+		g_pCLocalAreaListener->m_fnptrCallbackLocalAreaListener("start", NULL,NULL, false);
 		for (int i = 1; i <= 254; i++)
 		{
 			string* str = new string;
@@ -67,13 +68,13 @@ void MainThread(void* args)
 			it++;
 		}
 		pCLocalAreaListener->GetThreads()->clear();
-		g_pCLocalAreaListener->m_fnptrCallbackLocalAreaListener("end", NULL, false);
+		g_pCLocalAreaListener->m_fnptrCallbackLocalAreaListener("end", NULL,NULL, false);
 		Sleep(nPollTime);
 	} while (pCLocalAreaListener->HasNotStopped());
 
 	
 	pCLocalAreaListener->SetMainThreadHasStarted(FALSE);
-	g_pCLocalAreaListener->m_fnptrCallbackLocalAreaListener("stop", NULL, false);
+	g_pCLocalAreaListener->m_fnptrCallbackLocalAreaListener("stop", NULL, NULL, false);
 	return;
 }
 string CLocalAreaListener::GetStartingIPAddress()
@@ -100,10 +101,10 @@ void CLocalAreaListener::Stop()
 {
 	m_bHasStarted = false;
 }
-bool CLocalAreaListener::CheckIPDeviceConnected(string ipAddress,string &hostName)
+bool CLocalAreaListener::CheckIPDeviceConnected(string ipAddress,string &hostName, string &macAddress)
 {
 	CICMP* objICMP = new CICMP();
-	bool bRet = objICMP->CheckDevice(ipAddress, hostName);
+	bool bRet = objICMP->CheckDevice(ipAddress, hostName, macAddress);
 	delete objICMP;
 
 	return bRet;

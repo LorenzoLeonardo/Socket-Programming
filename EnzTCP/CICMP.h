@@ -8,6 +8,7 @@
 #include <stdio.h>
 #include <ws2tcpip.h>
 #include <string>
+#include <format>
 
 /* ICMP types */
 #define ICMP_ECHOREPLY 0 /* ICMP type: echo reply */
@@ -25,6 +26,6 @@ public:
 	CICMP();
 	~CICMP();
 
-	bool CheckDevice(string ipAddress, string& hostname);
+	bool CheckDevice(string ipAddress, string& hostname, string& sMacAddress);
 };
 

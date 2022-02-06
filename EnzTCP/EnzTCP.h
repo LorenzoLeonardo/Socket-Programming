@@ -26,7 +26,7 @@ public:
 };
 
 
-typedef void (*CallbackLocalAreaListener)(const char* , const char*, bool );
+typedef void (*CallbackLocalAreaListener)(const char* , const char*, const char*, bool );
 typedef void (*FuncNewConnection)(void*);
 typedef void (*FuncFindOpenPort)(char* , int, bool, int);
 

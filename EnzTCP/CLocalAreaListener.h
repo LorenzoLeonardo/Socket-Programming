@@ -10,7 +10,7 @@ using namespace std;
 
 
 
-typedef void (*CallbackLocalAreaListener)(const char* ipAddress, const char* hostName, bool bIsConnected);
+typedef void (*CallbackLocalAreaListener)(const char* ipAddress, const char* hostName, const char* macAddress, bool bIsConnected);
 
 class CLocalAreaListener
 {
@@ -22,7 +22,7 @@ public:
 	void Start();
 	void Stop();
 	string GetStartingIPAddress();
-	bool CheckIPDeviceConnected(string ipAddress, string& hostName);
+	bool CheckIPDeviceConnected(string ipAddress, string& hostName, string& macAddress);
 	map<thread*, int>* GetThreads();
 	bool HasNotStopped()
 	{
