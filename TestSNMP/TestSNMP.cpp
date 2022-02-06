@@ -1,11 +1,14 @@
 #include  <stdio.h>
-#include  <string.h>
+#include  <string>
 #include  <stdlib.h>
 #include  <winsock2.h>
 #include  <winsnmp.h>
 #include  <snmp.h>
 #include  <mgmtapi.h>
 #include <conio.h>
+#include <vector>
+
+using namespace std;
 
 #pragma comment(lib, "Ws2_32.lib")
 #pragma comment(lib, "Wsnmp32.lib")
@@ -14,6 +17,11 @@
 
 #define WM_SNMP_INCOMING WM_USER + 1
 #define WM_SNMP_DONE WM_USER + 2
+
+smiUINT32 g_valueBefore;
+smiUINT32 g_valueCurrent;
+DWORD g_dwTimeBefore;
+DWORD g_dwTimeCurrent;
 
 typedef struct _SNMP_SESSION
 {
@@ -33,7 +41,7 @@ typedef struct _SNMP_SESSION
 
 } SNMP_SESSION, * PSNMP_SESSION;
 
-
+int g_index = 0;
 BOOL    ProcessNotification(PSNMP_SESSION pSession);
 LRESULT CALLBACK NotificationWndProc(HWND   hWnd, UINT   uMsg, WPARAM wParam, LPARAM lParam);
 BOOL CreateNotificationWindow(PSNMP_SESSION pSession);
@@ -47,7 +55,8 @@ int __cdecl main(int argc, char** argv)
     smiOCTETS smiCommunity;
     char       szRouterIPAddress[32] = "192.168.0.1";
     char       szCommunity[32] = "public";
-
+    g_dwTimeBefore = GetTickCount();
+    g_valueBefore = 0;
     if (WSAStartup(0x202, &wsaData) != 0)
             return -1;
 
@@ -99,29 +108,46 @@ int __cdecl main(int argc, char** argv)
 
     pSession->nPduType = SNMP_PDU_GET; //Get
 
-    smiOID oid;
-    SnmpStrToOid("1.3.6.1.2.1.2.2.1.10.11", &oid);
-    pSession->hVbl = SnmpCreateVbl(pSession->hSnmpSession, &oid,NULL);
+    vector<string> vOID = {".1.3.6.1.2.1.2.2.1.10.9",".1.3.6.1.2.1.2.2.1.16.9"};
 
-    if (SNMPAPI_FAILURE == pSession->hVbl)
-         return -1;
-
-
-    pSession->nRequestId = 1;
-
-    // create a pdu using the parameters in pSession structure
-    pSession->hPdu = SnmpCreatePdu(pSession->hSnmpSession, pSession->nPduType, pSession->nRequestId, 0, 0, pSession->hVbl);
-
-    if (SNMPAPI_FAILURE == pSession->hPdu)
-        return -1;
-
-    // send the message to the agent
-    pSession->nError = SnmpSendMsg(pSession->hSnmpSession, pSession->hManagerEntity, pSession->hAgentEntity, pSession->hViewContext, pSession->hPdu);
-   
-  //  SnmpFreeDescriptor(SNMP_SYNTAX_OID, (smiLPOPAQUE)&oid);
-    if (SNMPAPI_FAILURE == pSession->nError)
+    while (true)
     {
-        pSession->nError = SnmpGetLastError(pSession->hSnmpSession);
+        smiOID oid;
+        SnmpStrToOid(vOID[g_index].c_str(), &oid);
+        pSession->hVbl = SnmpCreateVbl(pSession->hSnmpSession, &oid,NULL);
+
+        if (SNMPAPI_FAILURE == pSession->hVbl)
+             return -1;
+
+
+        pSession->nRequestId = 1;
+
+        // create a pdu using the parameters in pSession structure
+        pSession->hPdu = SnmpCreatePdu(pSession->hSnmpSession, pSession->nPduType, pSession->nRequestId, 0, 0, pSession->hVbl);
+
+        if (SNMPAPI_FAILURE == pSession->hPdu)
+            return -1;
+
+        // send the message to the agent
+        pSession->nError = SnmpSendMsg(pSession->hSnmpSession, pSession->hManagerEntity, pSession->hAgentEntity, pSession->hViewContext, pSession->hPdu);
+
+        //  SnmpFreeDescriptor(SNMP_SYNTAX_OID, (smiLPOPAQUE)&oid);
+        if (SNMPAPI_FAILURE == pSession->nError)
+        {
+            pSession->nError = SnmpGetLastError(pSession->hSnmpSession);
+            pSession->nError = SnmpFreeVbl(pSession->hVbl);
+            if (SNMPAPI_FAILURE == pSession->nError)
+            {
+                pSession->nError = SnmpGetLastError(pSession->hSnmpSession);
+            }
+            pSession->nError = SnmpFreePdu(pSession->hPdu);
+            if (SNMPAPI_FAILURE == pSession->nError)
+            {
+                pSession->nError = SnmpGetLastError(pSession->hSnmpSession);
+            }
+            return -1;
+        }
+
         pSession->nError = SnmpFreeVbl(pSession->hVbl);
         if (SNMPAPI_FAILURE == pSession->nError)
         {
@@ -132,42 +158,35 @@ int __cdecl main(int argc, char** argv)
         {
             pSession->nError = SnmpGetLastError(pSession->hSnmpSession);
         }
-        return -1;
-    }
-
-    pSession->nError = SnmpFreeVbl(pSession->hVbl);
-    if (SNMPAPI_FAILURE == pSession->nError)
-    {
-        pSession->nError = SnmpGetLastError(pSession->hSnmpSession);
-    }
-    pSession->nError = SnmpFreePdu(pSession->hPdu);
-    if (SNMPAPI_FAILURE == pSession->nError)
-    {
-        pSession->nError = SnmpGetLastError(pSession->hSnmpSession);
-    }
+        MSG     uMsg;
+        BOOL    fOk = FALSE;
 
 
-    MSG     uMsg;
-    BOOL    fOk = FALSE;
-
-
-    // get the next message for this session
-    while (GetMessage(&uMsg, pSession->hWnd, 0, 0))
-    {
-
-        // check for private message
-        if (uMsg.message != WM_SNMP_DONE)
+        // get the next message for this session
+        while (GetMessage(&uMsg, pSession->hWnd, 0, 0))
         {
-            TranslateMessage(&uMsg);
-            DispatchMessage(&uMsg);
+
+            // check for private message
+            if (uMsg.message != WM_SNMP_DONE)
+            {
+                TranslateMessage(&uMsg);
+                DispatchMessage(&uMsg);
+            }
+            else
+            {
+                // success
+                fOk = TRUE;
+                break;
+            }
         }
-        else
-        {
-            // success
-            fOk = TRUE;
-            break;
-        }
+        Sleep(500);
+        g_index++;
+
+        if (g_index == 2)
+            g_index = 0;
     }
+
+
     return 0;
 }
 BOOL    ProcessNotification(PSNMP_SESSION pSession)
@@ -232,11 +251,20 @@ BOOL    ProcessNotification(PSNMP_SESSION pSession)
                         LPSTR                string = NULL;
 
                         smiOID psmilOID;
-                        smiVALUE value;
+                        smiVALUE nvalue;
                         oidCount = SnmpCountVbl(pSession->hVbl);
 
-                        SnmpGetVb(pSession->hVbl, i, &psmilOID, &value);
-                        printf("%u\n", value);
+                       
+                        SnmpGetVb(pSession->hVbl, i, &psmilOID, &nvalue);
+                        g_dwTimeCurrent = GetTickCount();
+                        g_valueCurrent =(nvalue.value.uNumber);
+                        //printf("%lf   %d\n", ((double)(g_valueCurrent- g_valueBefore)*8)/((double)( abs((long)g_dwTimeCurrent - (long)g_dwTimeBefore))*1000000), g_dwTimeCurrent  - g_dwTimeBefore);
+                       if(g_index == 0)
+                            printf("inoctet %u\n", nvalue);
+                       else if (g_index == 1)
+                           printf("outoctet %u\n", nvalue);
+                        g_valueBefore = g_valueCurrent;
+                        g_dwTimeBefore = g_dwTimeCurrent;
                         fDone = true;
                 }
                 else
