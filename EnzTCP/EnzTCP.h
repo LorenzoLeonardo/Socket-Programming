@@ -49,4 +49,5 @@ extern "C" ENZTCPLIBRARY_API	void		StopLocalAreaListening();
 extern "C" ENZTCPLIBRARY_API	bool		StartSNMP(const char* szAgentIPAddress, const char* szCommunity, int nVersion, DWORD & dwLastError);
 extern "C" ENZTCPLIBRARY_API	smiVALUE	SNMPGet(const char* szOID, DWORD & dwLastError);
 extern "C" ENZTCPLIBRARY_API	void		EndSNMP();
+extern "C" ENZTCPLIBRARY_API	bool        GetDefaultGateway(char* szDefaultIPAddress);
 
