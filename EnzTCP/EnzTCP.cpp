@@ -4,9 +4,11 @@
 #include "CCheckOpenPorts.h"
 #include "CSocketClient.h"
 #include "CLocalAreaListener.h"
+#include "CSNMP.h"
 
 CCheckOpenPorts* g_pOpenPorts = NULL;
 CLocalAreaListener* g_pLocalAreaListener = NULL;
+CSNMP*   g_SNMP = NULL;
 
 BOOL APIENTRY DllMain(HMODULE hModule,
     DWORD  ul_reason_for_call,
@@ -26,6 +28,11 @@ BOOL APIENTRY DllMain(HMODULE hModule,
         {
             delete g_pLocalAreaListener;
             g_pLocalAreaListener = NULL;
+        }
+        if (g_SNMP != NULL)
+        {
+            delete g_SNMP;
+            g_SNMP = NULL;
         }
         break;
     }
@@ -103,3 +110,34 @@ void ENZTCPLIBRARY_API StopLocalAreaListening()
     }
 }
 
+bool ENZTCPLIBRARY_API StartSNMP(const char* szAgentIPAddress, const char* szCommunity, int nVersion, DWORD& dwLastError)
+{
+    if (g_SNMP != NULL)
+    {
+        delete g_SNMP;
+        g_SNMP = NULL;
+    }
+    g_SNMP = new CSNMP();
+
+    return g_SNMP->InitSNMP(szAgentIPAddress, szCommunity, nVersion, dwLastError);
+}
+smiVALUE ENZTCPLIBRARY_API SNMPGet(const char* szOID, DWORD& dwLastError)
+{
+    smiVALUE value;
+    memset(&value, 0, sizeof(value));
+
+    if (g_SNMP == NULL)
+    {
+        return value;
+    }
+    return g_SNMP->Get(szOID, dwLastError);
+}
+void ENZTCPLIBRARY_API EndSNMP()
+{
+    g_SNMP->EndSNMP();
+    if (g_SNMP != NULL)
+    {
+        delete g_SNMP;
+        g_SNMP = NULL;
+    }
+}

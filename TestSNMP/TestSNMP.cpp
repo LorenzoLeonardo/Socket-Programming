@@ -8,6 +8,7 @@
 #include <conio.h>
 #include <vector>
 
+#include "..\EnzTCP\EnzTCP.h"
 using namespace std;
 
 #pragma comment(lib, "Ws2_32.lib")
@@ -42,11 +43,23 @@ typedef struct _SNMP_SESSION
 } SNMP_SESSION, * PSNMP_SESSION;
 
 int g_index = 0;
+ULONG g_ifSpeed = 0;
+bool g_hasVisited = false;
 BOOL    ProcessNotification(PSNMP_SESSION pSession);
 LRESULT CALLBACK NotificationWndProc(HWND   hWnd, UINT   uMsg, WPARAM wParam, LPARAM lParam);
 BOOL CreateNotificationWindow(PSNMP_SESSION pSession);
 
-int __cdecl main(int argc, char** argv)
+
+typedef bool(WINAPI* FNStartSNMP)(const char*, const char* , int , DWORD& );
+typedef smiVALUE(WINAPI* FNSNMPGet)(const char* , DWORD& );
+typedef void(WINAPI* FNEndSNMP)();
+
+FNStartSNMP g_nptrStartSNMP;
+FNSNMPGet g_nptrSNMPGet;
+FNEndSNMP g_nptrEndSNMP;
+
+
+int SNMPTEST()
 {
     WSAData              wsaData;
     SNMPAPI_STATUS       status;
@@ -55,14 +68,15 @@ int __cdecl main(int argc, char** argv)
     smiOCTETS smiCommunity;
     char       szRouterIPAddress[32] = "192.168.0.1";
     char       szCommunity[32] = "public";
+
     g_dwTimeBefore = GetTickCount();
     g_valueBefore = 0;
     if (WSAStartup(0x202, &wsaData) != 0)
-            return -1;
+        return -1;
 
     status = SnmpStartup(&ulMajorVersion, &ulMinorVersion, &ulLevel, &ulTranslateMode, &ulRetransmitMode);
 
-    if(status == SNMPAPI_FAILURE)
+    if (status == SNMPAPI_FAILURE)
         return -1;
 
     SnmpSetTranslateMode(SNMPAPI_UNTRANSLATED_V1); //for v1
@@ -72,12 +86,12 @@ int __cdecl main(int argc, char** argv)
     if (pSession == NULL)
         return -1;
 
-    if(!CreateNotificationWindow(pSession))
+    if (!CreateNotificationWindow(pSession))
         return -1;
 
     // create a remote session
     pSession->hSnmpSession = SnmpOpen(pSession->hWnd, WM_SNMP_INCOMING);
-    if(SNMPAPI_FAILURE == pSession->hSnmpSession)
+    if (SNMPAPI_FAILURE == pSession->hSnmpSession)
         return -1;
 
     //router's IP
@@ -98,9 +112,9 @@ int __cdecl main(int argc, char** argv)
     SnmpSetRetry(pSession->hManagerEntity, 5);
 
     smiCommunity.ptr = (smiLPBYTE)szCommunity;
-    smiCommunity.len =strlen(szCommunity);
+    smiCommunity.len = strlen(szCommunity);
 
-    pSession->hViewContext = SnmpStrToContext(pSession->hSnmpSession,&smiCommunity);
+    pSession->hViewContext = SnmpStrToContext(pSession->hSnmpSession, &smiCommunity);
 
     // validate context handle
     if (SNMPAPI_FAILURE == pSession->hViewContext)
@@ -108,16 +122,16 @@ int __cdecl main(int argc, char** argv)
 
     pSession->nPduType = SNMP_PDU_GET; //Get
 
-    vector<string> vOID = {".1.3.6.1.2.1.2.2.1.10.9",".1.3.6.1.2.1.2.2.1.16.9"};
+    vector<string> vOID = { ".1.3.6.1.2.1.2.2.1.5.1",".1.3.6.1.2.1.2.2.1.10.11",".1.3.6.1.2.1.2.2.1.16.11" };
 
     while (true)
     {
         smiOID oid;
         SnmpStrToOid(vOID[g_index].c_str(), &oid);
-        pSession->hVbl = SnmpCreateVbl(pSession->hSnmpSession, &oid,NULL);
+        pSession->hVbl = SnmpCreateVbl(pSession->hSnmpSession, &oid, NULL);
 
         if (SNMPAPI_FAILURE == pSession->hVbl)
-             return -1;
+            return -1;
 
 
         pSession->nRequestId = 1;
@@ -131,7 +145,7 @@ int __cdecl main(int argc, char** argv)
         // send the message to the agent
         pSession->nError = SnmpSendMsg(pSession->hSnmpSession, pSession->hManagerEntity, pSession->hAgentEntity, pSession->hViewContext, pSession->hPdu);
 
-        //  SnmpFreeDescriptor(SNMP_SYNTAX_OID, (smiLPOPAQUE)&oid);
+        SnmpFreeDescriptor(SNMP_SYNTAX_OID, (smiLPOPAQUE)&oid);
         if (SNMPAPI_FAILURE == pSession->nError)
         {
             pSession->nError = SnmpGetLastError(pSession->hSnmpSession);
@@ -183,10 +197,35 @@ int __cdecl main(int argc, char** argv)
         g_index++;
 
         if (g_index == 2)
-            g_index = 0;
+            g_index = 1;
     }
 
 
+}
+
+int __cdecl main(int argc, char** argv)
+{
+
+    HMODULE hHanlde = LoadLibrary(L"EnzTCP.dll");
+    if (hHanlde != NULL)
+    {
+        g_nptrStartSNMP = (FNStartSNMP)GetProcAddress(hHanlde, "StartSNMP");
+        g_nptrSNMPGet = (FNSNMPGet)GetProcAddress(hHanlde, "SNMPGet");
+        g_nptrEndSNMP = (FNEndSNMP)GetProcAddress(hHanlde, "EndSNMP");
+    }
+    DWORD dwREt = 0;
+
+    if (g_nptrStartSNMP("192.168.0.1", "public", 2, dwREt))
+    {
+        smiVALUE value;
+        while (true)
+        {
+            value = g_nptrSNMPGet(".1.3.6.1.2.1.1.1", dwREt);
+            printf("%u\n", value.value.uNumber);
+            Sleep(1000);
+        }
+    }
+    g_nptrEndSNMP();
     return 0;
 }
 BOOL    ProcessNotification(PSNMP_SESSION pSession)
@@ -256,15 +295,26 @@ BOOL    ProcessNotification(PSNMP_SESSION pSession)
 
                        
                         SnmpGetVb(pSession->hVbl, i, &psmilOID, &nvalue);
-                        g_dwTimeCurrent = GetTickCount();
-                        g_valueCurrent =(nvalue.value.uNumber);
-                        //printf("%lf   %d\n", ((double)(g_valueCurrent- g_valueBefore)*8)/((double)( abs((long)g_dwTimeCurrent - (long)g_dwTimeBefore))*1000000), g_dwTimeCurrent  - g_dwTimeBefore);
-                       if(g_index == 0)
-                            printf("inoctet %u\n", nvalue);
-                       else if (g_index == 1)
-                           printf("outoctet %u\n", nvalue);
-                        g_valueBefore = g_valueCurrent;
-                        g_dwTimeBefore = g_dwTimeCurrent;
+
+                        if (g_index == 0)
+                        {
+                            g_ifSpeed = nvalue.value.uNumber;
+                            printf("ISPEED %u\n", g_ifSpeed);
+                        }
+                        else
+                        {
+                            g_dwTimeCurrent = GetTickCount();
+                            g_valueCurrent = (nvalue.value.uNumber);
+                           printf("%lf\n", ((double)(g_valueCurrent - g_valueBefore)*8)/(((double)( g_dwTimeCurrent - g_dwTimeBefore))* g_ifSpeed));
+               
+                           g_valueBefore = g_valueCurrent;
+                          //  if (g_index == 1)
+                          //       printf("IN OCTET : %lf MB\n", (double)g_valueCurrent/ (double)1048576);
+                          //  else if (g_index == 2)
+                            //     printf("OUT OCTET : %lf MB\n", (double)g_valueCurrent/ (double)1048576);
+                           
+                       
+                        }
                         fDone = true;
                 }
                 else
@@ -342,7 +392,6 @@ LRESULT CALLBACK NotificationWndProc(HWND   hWnd, UINT   uMsg,  WPARAM wParam,  
 } // end of NotificationWndProc
 BOOL CreateNotificationWindow(PSNMP_SESSION pSession)
 {
-
     BOOL    fOk;
     WNDCLASSA wc;
 
@@ -400,4 +449,4 @@ BOOL CreateNotificationWindow(PSNMP_SESSION pSession)
 
     return fOk;
 
-} // end of CreateNotificationWindow
+} 

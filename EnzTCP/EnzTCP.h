@@ -8,13 +8,19 @@
 #ifndef WIN32_LEAN_AND_MEAN
 #define WIN32_LEAN_AND_MEAN
 #endif
-#include <winsock2.h>
+#include  <winsock2.h>
+#include  <winsnmp.h>
+#include  <snmp.h>
+#include  <mgmtapi.h>
 
 #define MAX_BUFFER_SIZE 1024
 
 #pragma comment(lib, "Ws2_32.lib")
-#pragma comment (lib, "Mswsock.lib")
-#pragma comment (lib, "AdvApi32.lib")
+#pragma comment(lib, "Mswsock.lib")
+#pragma comment(lib, "AdvApi32.lib")
+#pragma comment(lib, "Wsnmp32.lib")
+#pragma comment(lib, "Snmpapi.lib")
+#pragma comment(lib, "Mgmtapi.lib")
 
 class  ISocket
 {
@@ -40,3 +46,7 @@ extern "C" ENZTCPLIBRARY_API	void		EnumOpenPorts(char* ipAddress, int nNumPorts,
 extern "C" ENZTCPLIBRARY_API	bool		IsPortOpen(char* ipAddress, int nNumPorts, int* pnLastError);
 extern "C" ENZTCPLIBRARY_API	void        StartLocalAreaListening(const char* ipAddress, CallbackLocalAreaListener fnpPtr, int nPollingTimeMS);
 extern "C" ENZTCPLIBRARY_API	void		StopLocalAreaListening();
+extern "C" ENZTCPLIBRARY_API	bool		StartSNMP(const char* szAgentIPAddress, const char* szCommunity, int nVersion, DWORD & dwLastError);
+extern "C" ENZTCPLIBRARY_API	smiVALUE	SNMPGet(const char* szOID, DWORD & dwLastError);
+extern "C" ENZTCPLIBRARY_API	void		EndSNMP();
+
