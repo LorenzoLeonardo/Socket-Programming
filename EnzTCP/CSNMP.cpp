@@ -229,8 +229,62 @@ bool    CSNMP::ProcessNotification(PSNMP_SESSION pSession)
                   
                     oidCount = SnmpCountVbl(pSession->hVbl);
 
-
+                    
                     SnmpGetVb(pSession->hVbl, i, &m_psmilOID, &m_nvalue);
+                    switch (m_nvalue.syntax)
+                    {
+                    case SNMP_SYNTAX_INT:
+                        printf("SNMP_SYNTAX_INT\n");
+                                            break;
+                    case SNMP_SYNTAX_BITS:
+                        printf("SNMP_SYNTAX_BITS\n");
+                                            break;
+                    case SNMP_SYNTAX_OCTETS:
+                        printf("SNMP_SYNTAX_OCTETS\n");
+                                            break;
+                    case SNMP_SYNTAX_NULL:
+                        printf("SNMP_SYNTAX_NULL\n");
+                                            break;
+                    case SNMP_SYNTAX_OID:
+                        printf("SNMP_SYNTAX_OID\n");
+                                            break;
+                    case SNMP_SYNTAX_IPADDR:
+                        printf("SNMP_SYNTAX_IPADDR\n");
+                                            break;
+                    case SNMP_SYNTAX_CNTR32:
+                        printf("SNMP_SYNTAX_CNTR32\n");
+                                            break;
+                    case SNMP_SYNTAX_GAUGE32:
+                        printf("SNMP_SYNTAX_GAUGE32\n");
+                                            break;
+                    case SNMP_SYNTAX_TIMETICKS:
+                        printf("SNMP_SYNTAX_TIMETICKS\n");
+                                            break;
+                    case SNMP_SYNTAX_OPAQUE:
+                        printf("SNMP_SYNTAX_OPAQUE\n");
+                                            break;
+                    case SNMP_SYNTAX_NSAPADDR:
+                        printf("SNMP_SYNTAX_NSAPADDR\n");
+                                            break;
+                    case SNMP_SYNTAX_CNTR64:
+                        printf("SNMP_SYNTAX_CNTR64\n");
+                                            break;
+                    case SNMP_SYNTAX_UINT32:
+                        printf("SNMP_SYNTAX_UINT32\n");
+                                            break;
+                    case SNMP_SYNTAX_NOSUCHOBJECT:
+                        printf("SNMP_SYNTAX_NOSUCHOBJECT\n");
+                                            break;
+                    case SNMP_SYNTAX_NOSUCHINSTANCE:
+                        printf("SNMP_SYNTAX_NOSUCHINSTANCE\n");
+                                            break;
+                    case SNMP_SYNTAX_ENDOFMIBVIEW:
+                        printf("SNMP_SYNTAX_ENDOFMIBVIEW\n");
+                                            break;
+                    default:
+                        printf("default\n");
+                        break;
+                    }
 
                 }
                 fDone = true;
