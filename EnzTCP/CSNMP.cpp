@@ -53,7 +53,7 @@ bool CSNMP::InitSNMP(const char* szAgentIPAddress, const char* szCommunity, int 
         SnmpUtilMemFree(m_pSession);
         return false;
     }
-    SnmpSetTimeout(m_pSession->hAgentEntity, 5000 / 10);
+    SnmpSetTimeout(m_pSession->hAgentEntity, 500);
     // attach retries specified with agent
     SnmpSetRetry(m_pSession->hAgentEntity, 5);
 
@@ -66,7 +66,7 @@ bool CSNMP::InitSNMP(const char* szAgentIPAddress, const char* szCommunity, int 
         return false;
     }
     // attach timeout specified with manager
-    SnmpSetTimeout(m_pSession->hManagerEntity, 5000 / 10);
+    SnmpSetTimeout(m_pSession->hManagerEntity, 500);
     // attach retries specified with manager
     SnmpSetRetry(m_pSession->hManagerEntity, 5);
 
@@ -119,17 +119,17 @@ smiVALUE CSNMP::Get(const char* szOID, DWORD &dwLastError)
     SnmpFreeDescriptor(SNMP_SYNTAX_OID, (smiLPOPAQUE)&oid);
     if (SNMPAPI_FAILURE == m_pSession->nError)
     {
-        m_pSession->nError = SnmpGetLastError(m_pSession->hSnmpSession);
+        dwLastError = SnmpGetLastError(m_pSession->hSnmpSession);
         m_pSession->nError = SnmpFreeVbl(m_pSession->hVbl);
         if (SNMPAPI_FAILURE == m_pSession->nError)
         {
-            m_pSession->nError = SnmpGetLastError(m_pSession->hSnmpSession);
+            dwLastError = SnmpGetLastError(m_pSession->hSnmpSession);
             return value;
         }
         m_pSession->nError = SnmpFreePdu(m_pSession->hPdu);
         if (SNMPAPI_FAILURE == m_pSession->nError)
         {
-            m_pSession->nError = SnmpGetLastError(m_pSession->hSnmpSession);
+            dwLastError = SnmpGetLastError(m_pSession->hSnmpSession);
             return value;
         }
        
@@ -137,18 +137,17 @@ smiVALUE CSNMP::Get(const char* szOID, DWORD &dwLastError)
     m_pSession->nError = SnmpFreeVbl(m_pSession->hVbl);
     if (SNMPAPI_FAILURE == m_pSession->nError)
     {
-        m_pSession->nError = SnmpGetLastError(m_pSession->hSnmpSession);
+        dwLastError = SnmpGetLastError(m_pSession->hSnmpSession);
         return value;
     }
     m_pSession->nError = SnmpFreePdu(m_pSession->hPdu);
     if (SNMPAPI_FAILURE == m_pSession->nError)
     {
-        m_pSession->nError = SnmpGetLastError(m_pSession->hSnmpSession);
+        dwLastError = SnmpGetLastError(m_pSession->hSnmpSession);
         return value;
     }
     MSG     uMsg;
     BOOL    fOk = FALSE;
-
 
     // get the next message for this session
     while (GetMessage(&uMsg, m_pSession->hWnd, 0, 0))

@@ -215,15 +215,14 @@ int __cdecl main(int argc, char** argv)
     }
     DWORD dwREt = 0;
 
-    if (g_nptrStartSNMP("192.168.0.1", "public", 1, dwREt))
+    if (g_nptrStartSNMP("192.168.0.2", "public", 1, dwREt))
     {
         smiVALUE value;
-        while (true)
-        {
+   
             value = g_nptrSNMPGet(".1.3.6.1.2.1.1.1.0", dwREt);
             printf("%u\n", value.value.uNumber);
             Sleep(1000);
-        }
+   
     }
     g_nptrEndSNMP();
     return 0;
