@@ -43,6 +43,7 @@ bool CSNMP::InitSNMP(const char* szAgentIPAddress, const char* szCommunity, int 
     {
         dwLastError = SnmpGetLastError(m_pSession->hSnmpSession);
         SnmpUtilMemFree(m_pSession);
+        WSACleanup();
         return false;
     }
 
@@ -52,6 +53,7 @@ bool CSNMP::InitSNMP(const char* szAgentIPAddress, const char* szCommunity, int 
     {
         dwLastError = SnmpGetLastError(m_pSession->hSnmpSession);
         SnmpUtilMemFree(m_pSession);
+        WSACleanup();
         return false;
     }
     SnmpSetTimeout(m_pSession->hAgentEntity, 500);
@@ -64,6 +66,7 @@ bool CSNMP::InitSNMP(const char* szAgentIPAddress, const char* szCommunity, int 
     {
         dwLastError = SnmpGetLastError(m_pSession->hSnmpSession);
         SnmpUtilMemFree(m_pSession);
+        WSACleanup();
         return false;
     }
     // attach timeout specified with manager
@@ -81,6 +84,7 @@ bool CSNMP::InitSNMP(const char* szAgentIPAddress, const char* szCommunity, int 
     {
         dwLastError = SnmpGetLastError(m_pSession->hSnmpSession);
         SnmpUtilMemFree(m_pSession);
+        WSACleanup();
         return false;
     }
 
@@ -94,10 +98,9 @@ void CSNMP::EndSNMP()
 
 smiVALUE CSNMP::Get(const char* szOID, DWORD &dwLastError)
 {
-    smiVALUE value;
     m_pSession->nPduType = SNMP_PDU_GET; //Get
 
-    memset(&value, 0, sizeof(value));
+    memset(&m_nvalue, 0, sizeof(m_nvalue));
     smiOID oid;
     SnmpStrToOid(szOID, &oid);
     m_pSession->hVbl = SnmpCreateVbl(m_pSession->hSnmpSession, &oid, NULL);
@@ -105,14 +108,14 @@ smiVALUE CSNMP::Get(const char* szOID, DWORD &dwLastError)
     if (SNMPAPI_FAILURE == m_pSession->hVbl)
     {
         dwLastError = SnmpGetLastError(m_pSession->hSnmpSession);
-        return value;
+        return m_nvalue;
     }
     m_pSession->nRequestId = 1;
 
     m_pSession->hPdu = SnmpCreatePdu(m_pSession->hSnmpSession, m_pSession->nPduType, m_pSession->nRequestId, 0, 0, m_pSession->hVbl);
 
     if (SNMPAPI_FAILURE == m_pSession->hPdu)
-        return value;
+        return m_nvalue;
 
     // send the message to the agent
     m_pSession->nError = SnmpSendMsg(m_pSession->hSnmpSession, m_pSession->hManagerEntity, m_pSession->hAgentEntity, m_pSession->hViewContext, m_pSession->hPdu);
@@ -125,13 +128,13 @@ smiVALUE CSNMP::Get(const char* szOID, DWORD &dwLastError)
         if (SNMPAPI_FAILURE == m_pSession->nError)
         {
             dwLastError = SnmpGetLastError(m_pSession->hSnmpSession);
-            return value;
+            return m_nvalue;
         }
         m_pSession->nError = SnmpFreePdu(m_pSession->hPdu);
         if (SNMPAPI_FAILURE == m_pSession->nError)
         {
             dwLastError = SnmpGetLastError(m_pSession->hSnmpSession);
-            return value;
+            return m_nvalue;
         }
        
     }
@@ -139,13 +142,13 @@ smiVALUE CSNMP::Get(const char* szOID, DWORD &dwLastError)
     if (SNMPAPI_FAILURE == m_pSession->nError)
     {
         dwLastError = SnmpGetLastError(m_pSession->hSnmpSession);
-        return value;
+        return m_nvalue;
     }
     m_pSession->nError = SnmpFreePdu(m_pSession->hPdu);
     if (SNMPAPI_FAILURE == m_pSession->nError)
     {
         dwLastError = SnmpGetLastError(m_pSession->hSnmpSession);
-        return value;
+        return m_nvalue;
     }
     MSG     uMsg;
     BOOL    fOk = FALSE;
