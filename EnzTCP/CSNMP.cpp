@@ -1,6 +1,7 @@
 #include "pch.h"
 #include "CSNMP.h"
 
+
 smiOID    CSNMP::m_psmilOID;
 smiVALUE  CSNMP::m_nvalue;
 
@@ -366,12 +367,17 @@ bool CSNMP::CreateNotificationWindow(PSNMP_SESSION pSession)
     {
         return FALSE;
     }
+    char szClassName[256];
+
+    memset(szClassName, 0, sizeof(szClassName));
+    HINSTANCE hInstance = GetModuleHandle(NULL);
+    sprintf_s(szClassName,sizeof(szClassName), "%s%I64u", "SNMPUTIL NOTIFICATION CLASS", (ULONG_PTR)hInstance);
 
     // initialize notification window class
     wc.lpfnWndProc = (WNDPROC)NotificationWndProc;
-    wc.lpszClassName = "SNMPUTIL NOTIFICATION CLASS";
+    wc.lpszClassName = szClassName;
     wc.lpszMenuName = NULL;
-    wc.hInstance = GetModuleHandle(NULL);
+    wc.hInstance = hInstance;
     wc.hIcon = NULL;
     wc.hCursor = NULL;
     wc.hbrBackground = NULL;
@@ -386,7 +392,7 @@ bool CSNMP::CreateNotificationWindow(PSNMP_SESSION pSession)
     }
     // create notification window
     pSession->hWnd = CreateWindowA(
-        "SNMPUTIL NOTIFICATION CLASS",
+        szClassName,
         "SNMP Util Class",                // pointer to window name
         WS_OVERLAPPEDWINDOW,              // window style
         0,                                // horizontal position of window
