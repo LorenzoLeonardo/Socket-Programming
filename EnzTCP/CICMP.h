@@ -22,10 +22,13 @@ using namespace std;
 
 class CICMP
 {
+private:
+	WSADATA m_wsaData;
 public:
 	CICMP();
 	~CICMP();
 
 	bool CheckDevice(string ipAddress, string& hostname, string& sMacAddress);
+	string GetHostName(string ipAddress);
 };
 
