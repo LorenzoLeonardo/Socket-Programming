@@ -4,10 +4,10 @@
 
 smiOID    CSNMP::m_psmilOID;
 smiVALUE  CSNMP::m_nvalue;
+bool      CSNMP::m_fDone = true;
 
 CSNMP::CSNMP()
 {
-
 }
 CSNMP::~CSNMP()
 {
@@ -150,6 +150,13 @@ smiVALUE CSNMP::Get(const char* szOID, DWORD &dwLastError)
         dwLastError = SnmpGetLastError(m_pSession->hSnmpSession);
         return m_nvalue;
     }
+
+    GetSessionMessage();
+    return m_nvalue;
+}
+
+void CSNMP::GetSessionMessage()
+{
     MSG     uMsg;
     BOOL    fOk = FALSE;
 
@@ -169,20 +176,86 @@ smiVALUE CSNMP::Get(const char* szOID, DWORD &dwLastError)
             break;
         }
     }
-    return m_nvalue;
 }
 
-bool    CSNMP::ProcessNotification(PSNMP_SESSION pSession)
+bool CSNMP::ProcessVarBind(PSNMP_SESSION pSession)
 {
+    // if we hit the end of tree, break.
+    int                  oidCount;
+    int                  i = 1;
+    LPSTR                string = NULL;
 
-    BOOL           fDone = TRUE;
+
+    oidCount = SnmpCountVbl(pSession->hVbl);
+
+    SnmpGetVb(pSession->hVbl, i, &m_psmilOID, &m_nvalue);
+    switch (m_nvalue.syntax)
+    {
+    case SNMP_SYNTAX_INT:
+        printf("SNMP_SYNTAX_INT\n");
+        break;
+    case SNMP_SYNTAX_BITS:
+        printf("SNMP_SYNTAX_BITS\n");
+        break;
+    case SNMP_SYNTAX_OCTETS:
+        printf("SNMP_SYNTAX_OCTETS\n");
+        break;
+    case SNMP_SYNTAX_NULL:
+        printf("SNMP_SYNTAX_NULL\n");
+        break;
+    case SNMP_SYNTAX_OID:
+        printf("SNMP_SYNTAX_OID\n");
+        break;
+    case SNMP_SYNTAX_IPADDR:
+        printf("SNMP_SYNTAX_IPADDR\n");
+        break;
+    case SNMP_SYNTAX_CNTR32:
+        printf("SNMP_SYNTAX_CNTR32\n");
+        break;
+    case SNMP_SYNTAX_GAUGE32:
+        printf("SNMP_SYNTAX_GAUGE32\n");
+        break;
+    case SNMP_SYNTAX_TIMETICKS:
+        printf("SNMP_SYNTAX_TIMETICKS\n");
+        break;
+    case SNMP_SYNTAX_OPAQUE:
+        printf("SNMP_SYNTAX_OPAQUE\n");
+        break;
+    case SNMP_SYNTAX_NSAPADDR:
+        printf("SNMP_SYNTAX_NSAPADDR\n");
+        break;
+    case SNMP_SYNTAX_CNTR64:
+        printf("SNMP_SYNTAX_CNTR64\n");
+        break;
+    case SNMP_SYNTAX_UINT32:
+        printf("SNMP_SYNTAX_UINT32\n");
+        break;
+    case SNMP_SYNTAX_NOSUCHOBJECT:
+        printf("SNMP_SYNTAX_NOSUCHOBJECT\n");
+        break;
+    case SNMP_SYNTAX_NOSUCHINSTANCE:
+        printf("SNMP_SYNTAX_NOSUCHINSTANCE\n");
+        break;
+    case SNMP_SYNTAX_ENDOFMIBVIEW:
+        printf("SNMP_SYNTAX_ENDOFMIBVIEW\n");
+        break;
+    default:
+        printf("default\n");
+        break;
+    }
+    return true;
+}
+
+bool CSNMP::ProcessNotification(PSNMP_SESSION pSession)
+{
+    bool bDone = true;
     SNMPAPI_STATUS status;
     HSNMP_ENTITY   hAgentEntity = (HSNMP_ENTITY)NULL;
     HSNMP_ENTITY   hManagerEntity = (HSNMP_ENTITY)NULL;
     HSNMP_CONTEXT  hViewContext = (HSNMP_CONTEXT)NULL;
     smiINT32       nPduType;
     smiINT32       nRequestId;
-
+    char            szBuf[1024];
 
     // validate pointer
     if (pSession == NULL)
@@ -223,87 +296,38 @@ bool    CSNMP::ProcessNotification(PSNMP_SESSION pSession)
                     (pSession->hAgentEntity == hAgentEntity) &&
                     (pSession->hManagerEntity == hManagerEntity))
                 {
-
-                    // if we hit the end of tree, break.
-                    int                  oidCount;
-                    int                  i = 1;
-                    LPSTR                string = NULL;
-
-                  
-                    oidCount = SnmpCountVbl(pSession->hVbl);
-
-                    
-                    SnmpGetVb(pSession->hVbl, i, &m_psmilOID, &m_nvalue);
-                    switch (m_nvalue.syntax)
+                    if (ProcessVarBind(pSession))
                     {
-                    case SNMP_SYNTAX_INT:
-                        printf("SNMP_SYNTAX_INT\n");
-                                            break;
-                    case SNMP_SYNTAX_BITS:
-                        printf("SNMP_SYNTAX_BITS\n");
-                                            break;
-                    case SNMP_SYNTAX_OCTETS:
-                        printf("SNMP_SYNTAX_OCTETS\n");
-                                            break;
-                    case SNMP_SYNTAX_NULL:
-                        printf("SNMP_SYNTAX_NULL\n");
-                                            break;
-                    case SNMP_SYNTAX_OID:
-                        printf("SNMP_SYNTAX_OID\n");
-                                            break;
-                    case SNMP_SYNTAX_IPADDR:
-                        printf("SNMP_SYNTAX_IPADDR\n");
-                                            break;
-                    case SNMP_SYNTAX_CNTR32:
-                        printf("SNMP_SYNTAX_CNTR32\n");
-                                            break;
-                    case SNMP_SYNTAX_GAUGE32:
-                        printf("SNMP_SYNTAX_GAUGE32\n");
-                                            break;
-                    case SNMP_SYNTAX_TIMETICKS:
-                        printf("SNMP_SYNTAX_TIMETICKS\n");
-                                            break;
-                    case SNMP_SYNTAX_OPAQUE:
-                        printf("SNMP_SYNTAX_OPAQUE\n");
-                                            break;
-                    case SNMP_SYNTAX_NSAPADDR:
-                        printf("SNMP_SYNTAX_NSAPADDR\n");
-                                            break;
-                    case SNMP_SYNTAX_CNTR64:
-                        printf("SNMP_SYNTAX_CNTR64\n");
-                                            break;
-                    case SNMP_SYNTAX_UINT32:
-                        printf("SNMP_SYNTAX_UINT32\n");
-                                            break;
-                    case SNMP_SYNTAX_NOSUCHOBJECT:
-                        printf("SNMP_SYNTAX_NOSUCHOBJECT\n");
-                                            break;
-                    case SNMP_SYNTAX_NOSUCHINSTANCE:
-                        printf("SNMP_SYNTAX_NOSUCHINSTANCE\n");
-                                            break;
-                    case SNMP_SYNTAX_ENDOFMIBVIEW:
-                        printf("SNMP_SYNTAX_ENDOFMIBVIEW\n");
-                                            break;
-                    default:
-                        printf("default\n");
-                        break;
+                        bDone = true;
                     }
-
+            
                 }
-                fDone = true;
+               
             }
             else
             {
                     // continue
-                fDone = FALSE;
+                bDone = FALSE;
             }
+
+        }
+        else if (nPduType == SNMP_PDU_TRAP)
+        {
+
+            status = SnmpEntityToStr(hAgentEntity, 1024, szBuf);
+          //  if (!(SNMP_FAILURE(status)))
+           //     PrintDbgMessage("Agent : %s \n\n", szBuf);
+
+            // Process the TRAP                
+            //ParseAndPrintv2Trap(pSession);
 
         }
         else
         {
-            fDone = FALSE;
+          //  PrintDbgMessage("snmputil: Invalid PDU type %d \n", nPduType);
+            // continue
+            bDone = FALSE;
         }
-
     }
     // release temporary entity
     SnmpFreeEntity(hAgentEntity);
@@ -324,7 +348,7 @@ bool    CSNMP::ProcessNotification(PSNMP_SESSION pSession)
         pSession->nError = SnmpGetLastError(pSession->hSnmpSession);
     }
 
-    return fDone;
+    return bDone;
 
 }  //end of ProcessNotification
 

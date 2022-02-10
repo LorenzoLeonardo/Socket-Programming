@@ -1,3 +1,10 @@
+/*
+*	Created By Lorenzo Leonardo
+*	Enzo Tech Computer Solutions
+*
+*	EnzTCP.dll Interface, Library for network related applications 
+*
+*/
 #pragma once
 #ifdef ENZTCPLIBRARY_EXPORTS
 #define ENZTCPLIBRARY_API __declspec(dllexport)
