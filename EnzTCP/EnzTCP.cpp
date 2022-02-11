@@ -83,6 +83,12 @@ void ENZTCPLIBRARY_API EnumOpenPorts(char* ipAddress, int nNumPorts, FuncFindOpe
     return;
 }
 
+void ENZTCPLIBRARY_API StopSearchingOpenPorts()
+{
+    if (g_pOpenPorts != NULL)
+        g_pOpenPorts->StopSearchingOpenPorts();
+    return;
+}
 
 bool ENZTCPLIBRARY_API IsPortOpen(char* ipAddress, int nNumPorts, int *pnlastError)
 {

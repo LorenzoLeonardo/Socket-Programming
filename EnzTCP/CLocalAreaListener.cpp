@@ -28,12 +28,15 @@ void MultiQueryingThread(void* args)
 {
 	string* p = (string*)args;
 	string hostName;
-	string macAddress;
+	string macAddress = "";
 
 	if (g_pCLocalAreaListener->CheckIPDeviceConnected(*p, hostName, macAddress))
-		g_pCLocalAreaListener->m_fnptrCallbackLocalAreaListener((const char*) (*p).c_str(), (const char*)hostName.c_str(), (const char*)macAddress.c_str(), true);
-
+	{
+		if(!(hostName.empty() || macAddress.empty()))
+			g_pCLocalAreaListener->m_fnptrCallbackLocalAreaListener((const char*)(*p).c_str(), (const char*)hostName.c_str(), (const char*)macAddress.c_str(), true);
+	}
 	delete p;
+	p = NULL;
 }
 
 void MainThread(void* args)
