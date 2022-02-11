@@ -73,27 +73,34 @@ void ThreadMultiFunc(LPVOID pParam)
 void ThreadMonitorThreads(LPVOID pParam)
 {
 	CCheckOpenPorts* PDlg = (CCheckOpenPorts*)pParam;
-	for (int i = 1; i <= PDlg->GetNumPorts(); i++)
-	{
-		THREADMON_t* ptmon = new THREADMON_t;
-		ptmon->sPort = to_string(i);
-		(* PDlg->GetThreads())[new thread(ThreadMultiFunc, ptmon)] = i;
-	}
-	//map<thread*, int>* PDlg = (map<thread*, int>*)pParam;
-	map<thread*, int>::iterator it = PDlg->GetThreads()->begin();
+	int nOuterLoopLimit = PDlg->GetNumPorts() / 1000;
+	
+	int i = 1;
 
-	while (it != PDlg->GetThreads()->end())
+	for (int j = 0; j <= nOuterLoopLimit; j++)
 	{
-		it->first->join();
-		it++;
+		for (; i <= PDlg->GetNumPorts() && (i%(1000* (j+1))); i++)
+		{
+			THREADMON_t* ptmon = new THREADMON_t;
+			ptmon->sPort = to_string(i);
+			(*PDlg->GetThreads())[new thread(ThreadMultiFunc, ptmon)] = i;
+		}
+		//map<thread*, int>* PDlg = (map<thread*, int>*)pParam;
+		map<thread*, int>::iterator it = PDlg->GetThreads()->begin();
+
+		while (it != PDlg->GetThreads()->end())
+		{
+			it->first->join();
+			it++;
+		}
+		it = PDlg->GetThreads()->begin();
+		while (it != PDlg->GetThreads()->end())
+		{
+			delete it->first;
+			it++;
+		}
+		PDlg->GetThreads()->clear();
 	}
-	it = PDlg->GetThreads()->begin();
-	while (it != PDlg->GetThreads()->end())
-	{
-		delete it->first;
-		it++;
-	}
-	PDlg->GetThreads()->clear();
 	//delete g_objPtrCCheckOpenPorts->GetThreadMonitoring();
 	return;
 }
