@@ -13,25 +13,27 @@ string CICMP::GetHostName(string ipAddress)
 {
     
     int iResult = 0;
-    char szhostname[512];
+    char hostname[NI_MAXHOST];
+    char servInfo[NI_MAXSERV];
+
     struct addrinfo* result = NULL, * ptr = NULL, hints;
 
     ZeroMemory(&hints, sizeof(hints));
     hints.ai_family = AF_INET;
     hints.ai_socktype = SOCK_RAW;
     hints.ai_protocol = IPPROTO_ICMP;
-    hints.ai_flags = AI_PASSIVE;
+    hints.ai_flags = AI_ALL;
 
     iResult = getaddrinfo(ipAddress.c_str(), NULL, &hints, &result);
     if (iResult != 0)
        return "";
 
-    memset(szhostname, 0, sizeof(szhostname));
-    iResult = getnameinfo(result->ai_addr, (socklen_t)result->ai_addrlen, szhostname, 512, 0, 0, 0);
+    memset(hostname, 0, sizeof(hostname));
+    iResult = getnameinfo(result->ai_addr, (socklen_t)result->ai_addrlen, hostname, NI_MAXHOST, servInfo, NI_MAXSERV, NI_NAMEREQD);
     if (iResult != 0)
         return "";
 
-    string sRet = szhostname;
+    string sRet = hostname;
     return sRet;
 }
 bool CICMP::CheckDevice(string ipAddress, string& hostname, string& sMacAddress)

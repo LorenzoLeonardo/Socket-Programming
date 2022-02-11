@@ -146,9 +146,11 @@ bool ENZTCPLIBRARY_API GetDefaultGateway(char* szDefaultIPAddress)
 {
     WSADATA wsaData;
     IPAddr* pDefaultGateway = 0;
-  
+    char hostname[NI_MAXHOST];
+    char servInfo[NI_MAXSERV];
+
     ULONG PhysAddrLen = 6;
-    struct addrinfo* result = NULL, * ptr = NULL, hints;
+    addrinfo* result = NULL, * ptr = NULL, hints;
     int iResult = 0;
     
     iResult = WSAStartup(MAKEWORD(2, 2), &wsaData);
@@ -157,22 +159,20 @@ bool ENZTCPLIBRARY_API GetDefaultGateway(char* szDefaultIPAddress)
  
     ZeroMemory(&hints, sizeof(hints));
     hints.ai_family = AF_INET;
-    hints.ai_socktype = SOCK_STREAM;
-    hints.ai_protocol = IPPROTO_TCP;
-    hints.ai_flags = AI_PASSIVE;
-
+    hints.ai_socktype = SOCK_RAW;
+    hints.ai_protocol = IPPROTO_ICMP;
+    hints.ai_flags = AI_ALL;
+    
     iResult = getaddrinfo("localhost", NULL, &hints, &result);
     if (iResult == 0)
     {
-        char host[512];
-        memset(host, 0, sizeof(host));
-        int status = getnameinfo(result->ai_addr, (socklen_t)result->ai_addrlen, host, 512, 0, 0, 0);
+        memset(hostname, 0, sizeof(hostname));
+        int status = getnameinfo(result->ai_addr, (socklen_t)result->ai_addrlen, hostname, NI_MAXHOST, servInfo, NI_MAXSERV, 0);
         freeaddrinfo(result);
-        iResult = getaddrinfo(host, NULL, &hints, &result);
+        iResult = getaddrinfo(hostname, NULL, &hints, &result);
         pDefaultGateway = (IPAddr*)(result->ai_addr->sa_data + 2);
         char szIPAddress[32];
         memset(szIPAddress, 0, sizeof(szIPAddress));
-
         inet_ntop(AF_INET, (const void*)pDefaultGateway, szIPAddress, sizeof(szIPAddress));
         string sTemp = szIPAddress;
 

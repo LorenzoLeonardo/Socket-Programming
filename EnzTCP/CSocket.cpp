@@ -43,21 +43,27 @@ const char* CSocket::GetHostName()
 }
 void CSocket::SetHostname()
 {
+    char hostname[NI_MAXHOST];
+    char servInfo[NI_MAXSERV];
+
+    ULONG PhysAddrLen = 6;
     struct addrinfo* result = NULL, * ptr = NULL, hints;
     int iResult = 0;
+
     ZeroMemory(&hints, sizeof(hints));
     hints.ai_family = AF_INET;
-    hints.ai_socktype = SOCK_STREAM;
-    hints.ai_protocol = IPPROTO_TCP;
-    hints.ai_flags = AI_PASSIVE;
+    hints.ai_socktype = SOCK_RAW;
+    hints.ai_protocol = IPPROTO_ICMP;
+    hints.ai_flags = AI_ALL;
 
     iResult = getaddrinfo(m_ipAddress.c_str(), NULL, &hints, &result);
+    if (iResult == 0)
     {
-        char host[512];
-        memset(host, 0, sizeof(host));
-        int status = getnameinfo(result->ai_addr, (socklen_t)result->ai_addrlen, host, 512, 0, 0, 0);
-        m_hostname = host;
+        memset(hostname, 0, sizeof(hostname));
+        int status = getnameinfo(result->ai_addr, (socklen_t)result->ai_addrlen, hostname, NI_MAXHOST, servInfo, NI_MAXSERV, 0);
         freeaddrinfo(result);
+        iResult = getaddrinfo(hostname, NULL, &hints, &result);
+        m_hostname = hostname;
     }
 }
 void CSocket::SetIP()
