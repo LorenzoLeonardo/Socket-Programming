@@ -37,6 +37,7 @@ private:
     ULONG            m_ulMajorVersion, m_ulMinorVersion, m_ulLevel, m_ulTranslateMode, m_ulRetransmitMode;
     smiOCTETS        m_smiCommunity;
     static bool      m_fDone;
+   
 public:
 	CSNMP();
 	~CSNMP();
@@ -50,7 +51,7 @@ public:
     static smiVALUE  m_nvalue;
     static bool    ProcessNotification(PSNMP_SESSION pSession);
     static LRESULT CALLBACK NotificationWndProc(HWND   hWnd, UINT   uMsg, WPARAM wParam, LPARAM lParam);
-
+    static bool    m_bSnmpSuccess;
 private:
     inline void GetSessionMessage();
     static bool ProcessVarBind(PSNMP_SESSION pSession);

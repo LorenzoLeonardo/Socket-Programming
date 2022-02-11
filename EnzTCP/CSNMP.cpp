@@ -5,7 +5,7 @@
 smiOID    CSNMP::m_psmilOID;
 smiVALUE  CSNMP::m_nvalue;
 bool      CSNMP::m_fDone = true;
-
+bool      CSNMP::m_bSnmpSuccess = true;
 CSNMP::CSNMP()
 {
 }
@@ -107,6 +107,7 @@ smiVALUE CSNMP::Get(const char* szOID, DWORD &dwLastError)
 
     if (SNMPAPI_FAILURE == m_pSession->hVbl)
     {
+        m_bSnmpSuccess = false;
         dwLastError = SnmpGetLastError(m_pSession->hSnmpSession);
         return m_nvalue;
     }
@@ -127,12 +128,14 @@ smiVALUE CSNMP::Get(const char* szOID, DWORD &dwLastError)
         m_pSession->nError = SnmpFreeVbl(m_pSession->hVbl);
         if (SNMPAPI_FAILURE == m_pSession->nError)
         {
+            m_bSnmpSuccess = false;
             dwLastError = SnmpGetLastError(m_pSession->hSnmpSession);
             return m_nvalue;
         }
         m_pSession->nError = SnmpFreePdu(m_pSession->hPdu);
         if (SNMPAPI_FAILURE == m_pSession->nError)
         {
+            m_bSnmpSuccess = false;
             dwLastError = SnmpGetLastError(m_pSession->hSnmpSession);
             return m_nvalue;
         }
@@ -141,17 +144,25 @@ smiVALUE CSNMP::Get(const char* szOID, DWORD &dwLastError)
     m_pSession->nError = SnmpFreeVbl(m_pSession->hVbl);
     if (SNMPAPI_FAILURE == m_pSession->nError)
     {
+        m_bSnmpSuccess = false;
         dwLastError = SnmpGetLastError(m_pSession->hSnmpSession);
         return m_nvalue;
     }
     m_pSession->nError = SnmpFreePdu(m_pSession->hPdu);
     if (SNMPAPI_FAILURE == m_pSession->nError)
     {
+        m_bSnmpSuccess = false;
         dwLastError = SnmpGetLastError(m_pSession->hSnmpSession);
         return m_nvalue;
     }
 
     GetSessionMessage();
+    if (!m_bSnmpSuccess)
+    {
+        dwLastError = m_pSession->nError;
+    }
+    else
+        dwLastError = SNMPAPI_SUCCESS;
     return m_nvalue;
 }
 
@@ -166,6 +177,8 @@ void CSNMP::GetSessionMessage()
         // check for private message
         if (uMsg.message != WM_SNMP_DONE)
         {
+            if (!m_bSnmpSuccess)
+                break;
             TranslateMessage(&uMsg);
             DispatchMessage(&uMsg);
         }
@@ -248,7 +261,7 @@ bool CSNMP::ProcessVarBind(PSNMP_SESSION pSession)
 
 bool CSNMP::ProcessNotification(PSNMP_SESSION pSession)
 {
-    bool bDone = true;
+    bool    bDone = true;
     SNMPAPI_STATUS status;
     HSNMP_ENTITY   hAgentEntity = (HSNMP_ENTITY)NULL;
     HSNMP_ENTITY   hManagerEntity = (HSNMP_ENTITY)NULL;
@@ -298,6 +311,7 @@ bool CSNMP::ProcessNotification(PSNMP_SESSION pSession)
                 {
                     if (ProcessVarBind(pSession))
                     {
+                        m_bSnmpSuccess = true;
                         bDone = true;
                     }
             
@@ -306,8 +320,7 @@ bool CSNMP::ProcessNotification(PSNMP_SESSION pSession)
             }
             else
             {
-                    // continue
-                bDone = FALSE;
+                bDone = false;
             }
 
         }
@@ -324,10 +337,9 @@ bool CSNMP::ProcessNotification(PSNMP_SESSION pSession)
         }
         else
         {
-          //  PrintDbgMessage("snmputil: Invalid PDU type %d \n", nPduType);
-            // continue
-            bDone = FALSE;
+            bDone = false;
         }
+
     }
     // release temporary entity
     SnmpFreeEntity(hAgentEntity);
@@ -340,11 +352,13 @@ bool CSNMP::ProcessNotification(PSNMP_SESSION pSession)
     pSession->nError = SnmpFreeVbl(pSession->hVbl);
     if (SNMPAPI_FAILURE == pSession->nError)
     {
+        m_bSnmpSuccess = false;
         pSession->nError = SnmpGetLastError(pSession->hSnmpSession);
     }
     pSession->nError = SnmpFreePdu(pSession->hPdu);
     if (SNMPAPI_FAILURE == pSession->nError)
     {
+        m_bSnmpSuccess = false;
         pSession->nError = SnmpGetLastError(pSession->hSnmpSession);
     }
 
