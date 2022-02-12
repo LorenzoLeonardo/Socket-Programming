@@ -5,34 +5,40 @@
 
 CSocketClient::CSocketClient()
 {
-	
+	WSADATA wsaData;
+	int iResult = WSAStartup(MAKEWORD(2, 2), &wsaData);
+	if (iResult != 0) {
+		throw iResult;
+	}
 }
 CSocketClient::CSocketClient(string ipServer)
 {
 	m_ipAddress = ipServer;
+	WSADATA wsaData;
+	int iResult = WSAStartup(MAKEWORD(2, 2), &wsaData);
+	if (iResult != 0) {
+		throw iResult;
+	}
 
 }
 CSocketClient::CSocketClient(string ipServer,string sPort)
 {
 	m_ipAddress = ipServer;
 	m_sPortNum = sPort;
+	WSADATA wsaData;
+	int iResult = WSAStartup(MAKEWORD(2, 2), &wsaData);
+	if (iResult != 0) {
+		throw iResult;
+	}
 
 }
 CSocketClient::~CSocketClient()
 {
-
+	WSACleanup();
 }
 bool CSocketClient::ConnectToServer(int* pLastError)
 {
-	WSADATA wsaData;
 	int iResult;
-	SOCKET ConnectSocket = INVALID_SOCKET;
-	*pLastError = 0;
-	// Initialize Winsock
-	iResult = WSAStartup(MAKEWORD(2, 2), &wsaData);
-	if (iResult != 0) {
-		return false;
-	}
 	struct addrinfo* result = NULL,
 		* ptr = NULL,
 		hints;
@@ -42,12 +48,12 @@ bool CSocketClient::ConnectToServer(int* pLastError)
 	hints.ai_socktype = SOCK_STREAM;
 	hints.ai_protocol = IPPROTO_TCP;
 
+	*pLastError = 0;
 	// Resolve the server address and port
 
 	iResult = getaddrinfo(m_ipAddress.c_str(), m_sPortNum.c_str(), &hints, &result);
 	if (iResult != 0) {
 		*pLastError = WSAGetLastError();
-		WSACleanup();
 		return false;
 	}
 
@@ -62,7 +68,6 @@ bool CSocketClient::ConnectToServer(int* pLastError)
 	if (m_socket == INVALID_SOCKET) {
 		*pLastError = WSAGetLastError();
 		freeaddrinfo(result);
-		WSACleanup();
 		return false;
 	}
 
@@ -81,15 +86,10 @@ bool CSocketClient::ConnectToServer(int* pLastError)
 }
 bool CSocketClient::ConnectToServer(string ipServer, string sPort, int *pLastError)
 {
-	WSADATA wsaData;
 	int iResult;
 	SOCKET ConnectSocket = INVALID_SOCKET;
 	*pLastError = 0;
-	// Initialize Winsock
-	iResult = WSAStartup(MAKEWORD(2, 2), &wsaData);
-	if (iResult != 0) {
-		return false;
-	}
+
 	struct addrinfo* result = NULL,
 		* ptr = NULL,
 		hints;
@@ -104,7 +104,6 @@ bool CSocketClient::ConnectToServer(string ipServer, string sPort, int *pLastErr
 	iResult = getaddrinfo(ipServer.c_str(), sPort.c_str(), &hints, &result);
 	if (iResult != 0) {
 		*pLastError = WSAGetLastError();
-		WSACleanup();
 		return false;
 	}
 
@@ -119,7 +118,6 @@ bool CSocketClient::ConnectToServer(string ipServer, string sPort, int *pLastErr
 	if (m_socket == INVALID_SOCKET) {
 		*pLastError = WSAGetLastError();
 		freeaddrinfo(result);
-		WSACleanup();
 		return false;
 	}
 
@@ -130,7 +128,6 @@ bool CSocketClient::ConnectToServer(string ipServer, string sPort, int *pLastErr
 		freeaddrinfo(result);
 		closesocket(m_socket);
 		m_socket = INVALID_SOCKET;
-
 		return false;
 	}
 	freeaddrinfo(result);

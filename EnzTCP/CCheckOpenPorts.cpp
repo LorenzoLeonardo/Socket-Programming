@@ -101,9 +101,16 @@ void ThreadMonitorThreads(LPVOID pParam)
 }
 bool CCheckOpenPorts::IsPortOpen(string ipAddress, string port, int *pLastError)
 {
-	CSocketClient clientSock(ipAddress);
+	try
+	{
+		CSocketClient clientSock(ipAddress);
 
-	return clientSock.ConnectToServer(ipAddress, port, pLastError);
+		return clientSock.ConnectToServer(ipAddress, port, pLastError);
+	}
+	catch (int nError)
+	{
+		return nError == 0;
+	}
 }
 
 void CCheckOpenPorts::StartSearchingOpenPorts()

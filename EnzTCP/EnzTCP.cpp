@@ -72,17 +72,25 @@ void ENZTCPLIBRARY_API CloseServer(HANDLE hHandle)
 
 HANDLE ENZTCPLIBRARY_API ConnectToServer(const char* ipAddress, const char* portNum, int* pnlastError)
 {
-    CSocketClient* pSocket = new CSocketClient(ipAddress, portNum);
-    int nLastError = 0;
-
-    if (pSocket->ConnectToServer(&nLastError))
-        return (HANDLE)pSocket;
-    else
+    try
     {
-        pSocket->DisconnectFromServer();
-        delete pSocket;
-        pSocket = NULL;
-        return (HANDLE)SOCKET_ERROR;
+        CSocketClient* pSocket = new CSocketClient(ipAddress, portNum);
+        int nLastError = 0;
+
+        if (pSocket->ConnectToServer(&nLastError))
+            return (HANDLE)pSocket;
+        else
+        {
+            pSocket->DisconnectFromServer();
+            delete pSocket;
+            pSocket = NULL;
+            return (HANDLE)SOCKET_ERROR;
+        }
+    }
+    catch (int nError)
+    {
+        if(nError !=0)
+            return (HANDLE)SOCKET_ERROR;
     }
 }
 
@@ -121,8 +129,15 @@ bool ENZTCPLIBRARY_API IsPortOpen(char* ipAddress, int nNumPorts, int *pnlastErr
 {
    string sAddress(ipAddress);
 
-   CSocketClient port;
-    return port.ConnectToServer(sAddress, to_string(nNumPorts), pnlastError);
+   try
+   {
+       CSocketClient port;
+       return port.ConnectToServer(sAddress, to_string(nNumPorts), pnlastError);
+   }
+   catch (int nError)
+   {
+       return nError == 0;
+   }
 }
 
 void ENZTCPLIBRARY_API StartLocalAreaListening(const char* ipAddress, CallbackLocalAreaListener fnpPtr, int nPollingTimeMS)
