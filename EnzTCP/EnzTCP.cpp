@@ -69,6 +69,33 @@ void ENZTCPLIBRARY_API CloseServer(HANDLE hHandle)
     }
 }
 
+
+HANDLE ENZTCPLIBRARY_API ConnectToServer(const char* ipAddress, const char* portNum, int* pnlastError)
+{
+    CSocketClient* pSocket = new CSocketClient(ipAddress, portNum);
+    int nLastError = 0;
+
+    if (pSocket->ConnectToServer(&nLastError))
+        return (HANDLE)pSocket;
+    else
+    {
+        pSocket->DisconnectFromServer();
+        delete pSocket;
+        pSocket = NULL;
+        return (HANDLE)SOCKET_ERROR;
+    }
+}
+
+void ENZTCPLIBRARY_API DisconnectFromServer(HANDLE hHandle)
+{
+    if (hHandle != NULL && hHandle != (HANDLE)SOCKET_ERROR)
+    {
+        CSocketClient* pSocket = (CSocketClient*)hHandle;
+        delete pSocket;
+        pSocket = NULL;
+    }
+}
+
 void ENZTCPLIBRARY_API EnumOpenPorts(char* ipAddress, int nNumPorts, FuncFindOpenPort pfnPtr)
 {
     if(g_pOpenPorts != NULL)
