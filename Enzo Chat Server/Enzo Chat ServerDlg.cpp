@@ -165,7 +165,7 @@ UINT HandleClientThreadFunc(LPVOID pParam)
 	{
 		CString csError;
 		csError.FormatMessage(_T("%d"), nError);
-		MessageBox(NULL, TEXT("ERROR"), csError, 0);
+//		MessageBox(NULL, TEXT("ERROR"), csError, 0);
 	}
 	
 	string text = pSocket->GetIP();
@@ -342,12 +342,18 @@ void CEnzoChatServerDlg::OnBnClickedOk()
 	input = _T("Server : ")+ input + _T("\r\n");
 
 	UpdateChatAreaText(input);
-	
-	for (int i = 0; i < m_vSocket->size(); i++)
+	try
 	{
-		char* sInput = convert_from_wstring(input);
-		(* m_vSocket)[i]->Send(sInput);
-		free(sInput);
+		for (int i = 0; i < m_vSocket->size(); i++)
+		{
+			char* sInput = convert_from_wstring(input);
+			(*m_vSocket)[i]->Send(sInput);
+			free(sInput);
+		}
+	}
+	catch (int nError)
+	{
+
 	}
 	m_ctrlInputArea.SetWindowText(_T(""));
 }

@@ -41,10 +41,10 @@ public:
 			CString ipAddress((*m_vSocket)[nRow]->GetIP());
 			CString socketID(to_string((*m_vSocket)[nRow]->GetSocket()).c_str());
 			CString hostName((*m_vSocket)[nRow]->GetHostName());
-			client = ipAddress + _T("(") + socketID + _T(")") + _T("(") + hostName + _T(")");
+			//client = ipAddress + _T("(") + socketID + _T(")") + _T("(") + hostName + _T(")");
 
 			m_ctrlListConnected.InsertItem(LVIF_TEXT | LVIF_STATE, nRow,
-				client, LVIS_SELECTED | LVIS_FOCUSED, LVIS_SELECTED | LVIS_FOCUSED, 0, 0);
+				hostName, LVIS_SELECTED | LVIS_FOCUSED, LVIS_SELECTED | LVIS_FOCUSED, 0, 0);
 			//m_ctrlListConnected.SetItemText(nItem, nRow + 1, m_vSocket[col]);
 		}
 
@@ -72,6 +72,8 @@ public:
 		m_ctrlChatArea.SetWindowText(stringText);
 		m_ctrlChatArea.SetFocus();
 		m_ctrlChatArea.SetSel(-1);
+
+		m_ctrlInputArea.SetFocus();
 	}
 
 
