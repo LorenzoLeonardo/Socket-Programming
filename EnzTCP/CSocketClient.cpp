@@ -134,6 +134,7 @@ bool CSocketClient::ConnectToServer(string ipServer, string sPort, int *pLastErr
 		return false;
 	}
 	freeaddrinfo(result);
+	DisconnectFromServer();
 	return true;
 }
 bool CSocketClient::DisconnectFromServer()
@@ -144,7 +145,6 @@ bool CSocketClient::DisconnectFromServer()
 		WSACleanup();
 		return false;
 	}
-
 	closesocket(m_socket);
 	WSACleanup();
 	return true;

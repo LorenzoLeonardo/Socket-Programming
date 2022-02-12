@@ -57,5 +57,5 @@ extern "C" ENZTCPLIBRARY_API	bool		StartSNMP(const char* szAgentIPAddress, const
 extern "C" ENZTCPLIBRARY_API	smiVALUE	SNMPGet(const char* szOID, DWORD & dwLastError);
 extern "C" ENZTCPLIBRARY_API	void		EndSNMP();
 extern "C" ENZTCPLIBRARY_API	bool        GetDefaultGateway(char* szDefaultIPAddress);
-extern "C"  ENZTCPLIBRARY_API	HANDLE		ConnectToServer(const char* ipAddress, const char* portNum, int* pnlastError);
-extern "C"  ENZTCPLIBRARY_API	void		DisconnectFromServer(HANDLE hHandle);
+extern "C" ENZTCPLIBRARY_API	HANDLE		ConnectToServer(const char* ipAddress, const char* portNum, int* pnlastError);
+extern "C" ENZTCPLIBRARY_API	void		DisconnectFromServer(HANDLE hHandle);
